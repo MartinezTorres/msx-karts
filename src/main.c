@@ -6,6 +6,24 @@ static void main_isr(void) {
 	if (paged_isr.f != nullptr) IN_SEGMENT(paged_isr.seg, PAGE_B, (*paged_isr.f)() ); 
 }
 
+
+static void CHPUT(char c) __z88dk_fastcall;
+
+static void asm_placeholder() __naked {
+    
+  	__asm
+_CHPUT:
+    ld a, l
+	jp 0x00A2      ; call CHPUT
+	__endasm;	
+}
+
+static void puts(const char *str) __z88dk_fastcall {
+	
+    while (*str) CHPUT(*str++);
+}
+
+
 T_SA SA;
 static uint8_t scratchpad[256];
 void initCanvas() {
@@ -683,17 +701,25 @@ static void push8_double(const uint16_t *pd) __z88dk_fastcall {
 
 static void prepareCanvasFullWidth(uint16_t address) {
 
-	address += MODE2_ADDRESS_PG;
+
+    for (uint8_t i=0; i<2; i++) {
+		TMS99X8_memset(MODE2_ADDRESS_PG + address, 0x00, 32*8);
+		TMS99X8_memset(MODE2_ADDRESS_CT + address, 0x07, 32*8);
+		address += 32*8;
+	}
+
 
     // Prepares the pattern table for 4x1 mode
-    for (uint8_t i=0; i<12; i++) {
-		TMS99X8_memset(address, 0xF0, 32*8);
+    for (uint8_t i=0; i<10; i++) {
+		TMS99X8_memset(MODE2_ADDRESS_PG + address, 0xF0, 32*8);
 		address += 32*8;
 	}
 }
 
 static void printCanvasFullWidth(Car *player, uint16_t address) {
 	
+	address += MODE2_ADDRESS_CT + 32*8*2;
+
 	uint8_t imap = ((player->a+8)/16)&3;
 	
 	uint16_t ipx, ipy;
@@ -739,7 +765,7 @@ static void printCanvasFullWidth(Car *player, uint16_t address) {
 	
 	{
 		const uint16_t *pd = (const uint16_t *)all_angle_double[angleSelector];
-		for (uint8_t rowTile=0; rowTile<8; rowTile++) {
+		for (uint8_t rowTile=0; rowTile<6; rowTile++) {
 			for (uint8_t colGroup=0; colGroup<4; colGroup++) {
 				push8_double(pd);
 				pd += 32;
@@ -750,11 +776,15 @@ static void printCanvasFullWidth(Car *player, uint16_t address) {
 
 static void prepareCanvasHalfWidth(uint16_t address) {
 
-	address += MODE2_ADDRESS_PG;
+    for (uint8_t i=0; i<2; i++) {
+		TMS99X8_memset(MODE2_ADDRESS_PG + address, 0x00, 16*8);
+		TMS99X8_memset(MODE2_ADDRESS_CT + address, 0x07, 16*8);
+		address += 32*8;
+	}
 
     // Prepares the pattern table for 4x1 mode
-    for (uint8_t i=0; i<12; i++) {
-		TMS99X8_memset(address, 0xF0, 16*8);
+    for (uint8_t i=0; i<10; i++) {
+		TMS99X8_memset(MODE2_ADDRESS_PG + address, 0xF0, 16*8);
 		address += 32*8;
 	}
 	
@@ -769,7 +799,7 @@ static void prepareCanvasHalfWidth(uint16_t address) {
 	scratchpad[6] = 0b11111111;
 	scratchpad[7] = 0b11111111;
 	
-	TMS99X8_memcpy(address + 7*32*8 + 7*8, scratchpad, 8);
+	TMS99X8_memcpy(MODE2_ADDRESS_PG + address + 9*32*8 + 7*8, scratchpad, 8);
 
 	scratchpad[0] = 0b01011111;
 	scratchpad[1] = 0b10101011;
@@ -777,12 +807,12 @@ static void prepareCanvasHalfWidth(uint16_t address) {
 	scratchpad[3] = 0b10101011;
 	scratchpad[4] = 0b01011111;
 
-	TMS99X8_memcpy(address + 7*32*8 + 8*8, scratchpad, 8);
+	TMS99X8_memcpy(MODE2_ADDRESS_PG + address + 9*32*8 + 8*8, scratchpad, 8);
 }
 
 static void printCanvasHalfWidth(Car *player, uint16_t address) {
 	
-	address += MODE2_ADDRESS_CT;
+	address += MODE2_ADDRESS_CT + 32*8*2;
 	
 	uint8_t imap = ((player->a+8)/16)&3;
 	
@@ -849,7 +879,7 @@ static void printCanvasHalfWidth(Car *player, uint16_t address) {
 			pd += 32;
 			pd += 32;
 
-		for (uint8_t rowTile=0; rowTile<4; rowTile++) {
+		for (uint8_t rowTile=0; rowTile<2; rowTile++) {
 			TMS99X8_setPtr(address); address += 32*8;
 			pd += 32;
 			for (uint8_t colGroup=1; colGroup<3; colGroup++) {
@@ -860,281 +890,6 @@ static void printCanvasHalfWidth(Car *player, uint16_t address) {
 		}
 	}
 }
-
-void initInfoSprites_int() {
-
-    static const uint8_t SPRITES[][32] = {{
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-    }, {
-        0b01111000,
-        0b10000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b10000000,
-        0b10000000,
-        0b10000000,
-        0b10000000,
-        0b01000000,
-
-        0b00000010,
-        0b00000001,
-        0b00000001,
-        0b00000001,
-        0b00000001,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000001,
-        0b00011110,
-    }, {
-        0b00011111,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b10000000,
-
-        0b10000000,
-        0b10000000,
-        0b10000000,
-        0b10000000,
-        0b10000000,
-        0b00000000,
-        0b00000000,
-        0b00000001,
-
-        0b10000000,
-        0b00000000,
-        0b00000000,
-        0b00000001,
-        0b00000001,
-        0b00000001,
-        0b00000001,
-        0b00000001,
-
-        0b00000001,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b11111000,
-    }, {
-        0b00000001,
-        0b00000000,
-        0b00000000,
-        0b10000000,
-        0b10000000,
-        0b10000000,
-        0b10000000,
-        0b10000000,
-
-        0b10000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00011111,
-
-        0b11111000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000001,
-
-        0b00000001,
-        0b00000001,
-        0b00000001,
-        0b00000001,
-        0b00000001,
-        0b00000000,
-        0b00000000,
-        0b10000000,
-    }, {
-        0b01000000,
-        0b10000000,
-        0b10000000,
-        0b10000000,
-        0b10000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b10000000,
-        0b01111000,
-
-        0b00011110,
-        0b00000001,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000001,
-        0b00000001,
-        0b00000001,
-        0b00000001,
-        0b00000010,
-    }, {
-        0b11111111,
-        0b11000000,
-        0b10000000,
-        0b10000000,
-        0b10000000,
-        0b10000000,
-        0b10000000,
-        0b10000000,
-
-        0b10000000,
-        0b10000000,
-        0b10000000,
-        0b10000000,
-        0b10000000,
-        0b10000000,
-        0b11000000,
-        0b11111111,
-
-        0b11111111,
-        0b00000011,
-        0b00000001,
-        0b00000001,
-        0b00000001,
-        0b00000001,
-        0b00000001,
-        0b00000001,
-
-        0b00000001,
-        0b00000001,
-        0b00000001,
-        0b00000001,
-        0b00000001,
-        0b00000001,
-        0b00000011,
-        0b11111111,
-    }, {
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b10111111,
-        0b10111111,
-        0b10111111,
-        0b10111111,
-
-        0b10111111,
-        0b10111111,
-        0b10111111,
-        0b10111111,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b11111000,
-        0b11111110,
-        0b11111111,
-        0b11111111,
-
-        0b11111111,
-        0b11111111,
-        0b11111110,
-        0b11111000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-    }};
- 
-	yield();
-    TMS99X8_setPtr(MODE2_ADDRESS_SG);
-	yield();
-    TMS99X8_memcpy32(SPRITES[0]);
-	yield();
-    TMS99X8_memcpy32(SPRITES[1]);
-	yield();
-    TMS99X8_memcpy32(SPRITES[2]);
-	yield();
-    TMS99X8_memcpy32(SPRITES[3]);
-	yield();
-    TMS99X8_memcpy32(SPRITES[4]);
-	yield();
-    TMS99X8_memcpy32(SPRITES[5]);
-	yield();
-    TMS99X8_memcpy32(SPRITES[6]);
-}
-
 
 
 uint8_t keyboard_line_read(uint8_t line) __z88dk_fastcall;
@@ -1156,19 +911,93 @@ inline static void keyboard_line_read_placeholder(void) {
 	__endasm;
 }
 
+void updateCar(Car *car, uint8_t k) {
 
-int main(void) {
+	if (k & J_LEFT) { 
+		
+		car->a+=63;
+	}
+	if (k & J_RIGHT) { 
+		
+		car->a+=1;
+	}
+	car->a = (car->a&63);
+	if (k & J_UP) { 
+		
+		car->vx += sin[car->a]>>3;
+		car->vy += cos[car->a]>>3;
+		//playervx += std::round(12*sin(playera/64. * 2 * M_PI));
+		//playervy += std::round(12*cos(playera/64. * 2 * M_PI));
+	}
+	if (k & J_DOWN) { 
 
-    // Normal initialization routine
-    msxhal_init(); // Bare minimum initialization of the msx support 
-    DI(); // This game has normally disabled interrupts. 
+		if (car->vx>0) {
+			car->vx -= (car->vx+7)/8;
+		} else {
+			car->vx -= (car->vx-7)/8;
+		}
+		if (car->vy>0) {
+			car->vy -= (car->vy+7)/8;
+		} else {
+			car->vy -= (car->vy-7)/8;
+		}
 
+	}
+
+	mapper_load_segment(MODULE_SEGMENT(track1_png_a, PAGE_C),PAGE_C);
 	
-  //msxhal_request60Hz();
-  //msxhal_enableR800();
+	{
+		uint8_t road = track1_png_a[2*(64*(car->y/256)+(car->x/256))]&0xF;
+		if (road<2) {
+			car->vx = -car->vx;
+			car->vy = -car->vy;
+		}
+	}
+	
+	
 
-    paged_isr.f = nullptr;
-    msxhal_install_isr(main_isr);      
+	if (car->vx>0) {
+		car->vx -= (car->vx+15)/16;
+	} else {
+		car->vx -= (car->vx-15)/16;
+	}
+	if (car->vy>0) {
+		car->vy -= (car->vy+15)/16;
+	} else {
+		car->vy -= (car->vy-15)/16;
+	}
+
+	car->x += car->vx;
+	car->y += car->vy;	
+}
+
+void play1() {
+
+	initCanvas();
+
+	{
+		
+		player0.x = 32*256;
+		player0.y = 32*256;
+		player0.vx = 0;
+		player0.vy = 0;
+		player0.a = 0;
+	}
+	
+	
+	prepareCanvasFullWidth(0x0600);
+	
+	while (true) {
+		
+		printCanvasFullWidth(&player0, 0x600);
+
+		uint8_t k = keyboard_line_read(8);
+		updateCar(&player0,k);
+	}
+}
+
+
+void play2() {
 
 	initCanvas();
 
@@ -1183,146 +1012,202 @@ int main(void) {
 		player1 = player0;
 	}
 	
-	enable_keyboard_routine=0;
 	
-	prepareCanvasHalfWidth(0x000);
-	prepareCanvasHalfWidth(0xC80);
+	prepareCanvasFullWidth(0x000);
+	prepareCanvasFullWidth(0xC00);
 	
 	while (true) {
 		
-//		printCanvasFullWidth(MODE2_ADDRESS_CT+0x000);
-//		printCanvasFullWidth(MODE2_ADDRESS_CT+0xC00);
-		printCanvasHalfWidth(&player0, 0x000);
-//		printCanvasHalfWidth(&player1, 0x080);
-//		printCanvasHalfWidth(&player2, 0xC00);
-		printCanvasHalfWidth(&player1, 0xC80);
-
-//		wait_frame();
+		printCanvasFullWidth(&player0, 0x000);
+		printCanvasFullWidth(&player1, 0xC00);
 
 		{
 		
 			uint8_t k = keyboard_line_read(8);
-			if (k & J_LEFT) { 
-				
-				player0.a+=63;
-			}
-			if (k & J_RIGHT) { 
-				
-				player0.a+=1;
-			}
-			player0.a = (player0.a&63);
-			if (k & J_UP) { 
-				
-				player0.vx += sin[player0.a]>>3;
-				player0.vy += cos[player0.a]>>3;
-				//playervx += std::round(12*sin(playera/64. * 2 * M_PI));
-				//playervy += std::round(12*cos(playera/64. * 2 * M_PI));
-			}
-			if (k & J_DOWN) { 
-
-				if (player0.vx>0) {
-					player0.vx -= (player0.vx+7)/8;
-				} else {
-					player0.vx -= (player0.vx-7)/8;
-				}
-				if (player0.vy>0) {
-					player0.vy -= (player0.vy+7)/8;
-				} else {
-					player0.vy -= (player0.vy-7)/8;
-				}
-
-			}
-
-			mapper_load_segment(MODULE_SEGMENT(track1_png_a, PAGE_C),PAGE_C);
-			
-			{
-				uint8_t road = track1_png_a[2*(64*(player0.y/256)+(player0.x/256))]&0xF;
-				if (road<2) {
-					player0.vx = -player0.vx;
-					player0.vy = -player0.vy;
-				}
-			}
-			
-			
-
-			if (player0.vx>0) {
-				player0.vx -= (player0.vx+15)/16;
-			} else {
-				player0.vx -= (player0.vx-15)/16;
-			}
-			if (player0.vy>0) {
-				player0.vy -= (player0.vy+15)/16;
-			} else {
-				player0.vy -= (player0.vy-15)/16;
-			}
-
-			player0.x += player0.vx;
-			player0.y += player0.vy;
+			updateCar(&player0,k);
 		}
 
 		{
+			uint8_t k = 0;
 			uint8_t l2 = keyboard_line_read(2);
 			uint8_t l3 = keyboard_line_read(3);
 			uint8_t l5 = keyboard_line_read(5);
 			
-			if (l2 & 0x40) { 
-				
-				player1.a+=63;
-			}
-			if (l3 & 0x02) { 
-				
-				player1.a+=1;
-			}
-			player1.a = (player1.a&63);
-			if (l5 & 0x10) { 
-				
-				player1.vx += sin[player1.a]>>3;
-				player1.vy += cos[player1.a]>>3;
-				//playervx += std::round(12*sin(playera/64. * 2 * M_PI));
-				//playervy += std::round(12*cos(playera/64. * 2 * M_PI));
-			}
-			if (l5 & 0x01) { 
-
-				if (player1.vx>0) {
-					player1.vx -= (player1.vx+7)/8;
-				} else {
-					player1.vx -= (player1.vx-7)/8;
-				}
-				if (player1.vy>0) {
-					player1.vy -= (player1.vy+7)/8;
-				} else {
-					player1.vy -= (player1.vy-7)/8;
-				}
-
-			}
-
-			mapper_load_segment(MODULE_SEGMENT(track1_png_a, PAGE_C),PAGE_C);
-			
-			{
-				uint8_t road = track1_png_a[2*(64*(player1.y/256)+(player1.x/256))]&0xF;
-				if (road<2) {
-					player1.vx = -player1.vx;
-					player1.vy = -player1.vy;
-				}
-			}
-			
-			
-
-			if (player1.vx>0) {
-				player1.vx -= (player1.vx+15)/16;
-			} else {
-				player1.vx -= (player1.vx-15)/16;
-			}
-			if (player1.vy>0) {
-				player1.vy -= (player1.vy+15)/16;
-			} else {
-				player1.vy -= (player1.vy-15)/16;
-			}
-
-			player1.x += player1.vx;
-			player1.y += player1.vy;
+			if (l2 & 0x40) k+=J_LEFT;
+			if (l3 & 0x02) k+=J_RIGHT;
+			if (l5 & 0x10) k+=J_UP;
+			if (l5 & 0x01) k+=J_DOWN;
+			updateCar(&player1,k);
 		}		
 	}
+}
 
+void play3() {
+
+	initCanvas();
+
+	{
+		
+		player0.x = 32*256;
+		player0.y = 32*256;
+		player0.vx = 0;
+		player0.vy = 0;
+		player0.a = 0;
+
+		player1 = player0;
+		player2 = player0;
+	}
+	
+	
+	prepareCanvasHalfWidth(0x000);
+	prepareCanvasHalfWidth(0x080);
+	prepareCanvasHalfWidth(0xC40);
+	
+	while (true) {
+		
+		printCanvasHalfWidth(&player0, 0x000);
+		printCanvasHalfWidth(&player0, 0x000);
+		printCanvasHalfWidth(&player1, 0x080);
+		printCanvasHalfWidth(&player2, 0xC40);
+
+//		wait_frame();
+
+		uint8_t l2 = keyboard_line_read(2);
+		uint8_t l3 = keyboard_line_read(3);
+		uint8_t l4 = keyboard_line_read(4);
+		uint8_t l5 = keyboard_line_read(5);
+		uint8_t l8 = keyboard_line_read(8);
+
+		{
+		
+			uint8_t k = l8;
+			updateCar(&player0,k);
+		}
+
+		{
+			uint8_t k = 0;
+			
+			if (l2 & 0x40) k+=J_LEFT;
+			if (l3 & 0x02) k+=J_RIGHT;
+			if (l5 & 0x10) k+=J_UP;
+			if (l5 & 0x01) k+=J_DOWN;
+			updateCar(&player1,k);
+		}		
+
+		{
+			uint8_t k = 0;
+			
+			if (l3 & 0x80) k+=J_LEFT;
+			if (l4 & 0x02) k+=J_RIGHT;
+			if (l3 & 0x40) k+=J_UP;
+			if (l4 & 0x01) k+=J_DOWN;
+			updateCar(&player2,k);
+		}		
+	}
+}
+
+void play4() {
+
+	initCanvas();
+
+	{
+		
+		player0.x = 32*256;
+		player0.y = 32*256;
+		player0.vx = 0;
+		player0.vy = 0;
+		player0.a = 0;
+
+		player1 = player0;
+		player2 = player0;
+		player3 = player0;
+	}
+	
+	
+	prepareCanvasHalfWidth(0x000);
+	prepareCanvasHalfWidth(0x080);
+	prepareCanvasHalfWidth(0xC00);
+	prepareCanvasHalfWidth(0xC80);
+	
+	while (true) {
+		
+		printCanvasHalfWidth(&player0, 0x000);
+		printCanvasHalfWidth(&player1, 0x080);
+		printCanvasHalfWidth(&player2, 0xC00);
+		printCanvasHalfWidth(&player3, 0xC80);
+
+//		wait_frame();
+
+		uint8_t l2 = keyboard_line_read(2);
+		uint8_t l3 = keyboard_line_read(3);
+		uint8_t l4 = keyboard_line_read(4);
+		uint8_t l5 = keyboard_line_read(5);
+		uint8_t l8 = keyboard_line_read(8);
+
+		{
+		
+			uint8_t k = l8;
+			updateCar(&player0,k);
+		}
+
+		{
+			uint8_t k = 0;
+			
+			if (l2 & 0x40) k+=J_LEFT;
+			if (l3 & 0x02) k+=J_RIGHT;
+			if (l5 & 0x10) k+=J_UP;
+			if (l5 & 0x01) k+=J_DOWN;
+			updateCar(&player1,k);
+		}		
+
+		{
+			uint8_t k = 0;
+			
+			if (l3 & 0x80) k+=J_LEFT;
+			if (l4 & 0x02) k+=J_RIGHT;
+			if (l3 & 0x40) k+=J_UP;
+			if (l4 & 0x01) k+=J_DOWN;
+			updateCar(&player2,k);
+		}		
+
+		{
+			uint8_t k = 0;
+			
+			if (l3 & 0x08) k+=J_LEFT;
+			if (l3 & 0x20) k+=J_RIGHT;
+			if (l5 & 0x02) k+=J_UP;
+			if (l3 & 0x01) k+=J_DOWN;
+			updateCar(&player3,k);
+		}		
+	}
+}
+
+
+
+
+int main(void) {
+
+    // Normal initialization routine
+    msxhal_init(); // Bare minimum initialization of the msx support 
+    DI(); // This game has normally disabled interrupts. 
+
+	
+  //msxhal_request60Hz();
+  //msxhal_enableR800();
+
+    paged_isr.f = nullptr;
+    msxhal_install_isr(main_isr);      
+
+	enable_keyboard_routine=0;
+
+	puts("Press 1-4:");
+	while (true) {
+		uint8_t k = keyboard_line_read(0);
+		if (k==0x02) { play1(); }
+		if (k==0x04) { play2(); }
+		if (k==0x08) { play3(); }
+		if (k==0x10) { play4(); }
+		wait_frame();
+	}
     return 0;
 }
