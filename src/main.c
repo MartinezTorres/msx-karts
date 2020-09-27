@@ -1,11 +1,7 @@
-#include "common.h"
+#include <megalinker.h>
 
-Tpaged_isr paged_isr;
-
-static void main_isr(void) { 
-	if (paged_isr.f != nullptr) IN_SEGMENT(paged_isr.seg, PAGE_B, (*paged_isr.f)() ); 
-}
-
+#include <hal/msxhal.h>
+#include <hal/tms99X8.h>
 
 static void CHPUT(char c) __z88dk_fastcall;
 
@@ -26,18 +22,10 @@ static void puts(const char *str) __z88dk_fastcall {
 
 T_SA SA;
 static uint8_t scratchpad[256];
-void initCanvas() {
+static void initCanvas() {
 
     // Activates mode 2 and clears the screen (in black)
-    TMS99X8_activateMode2(MODE2_ALL_ROWS); 
-
-    // Disables individually all sprites
-    for (uint8_t n=0; n<32; n++) { SA[n].y = 209; }
-    TMS99X8_writeSpriteAttributes(0,SA);
-    
-    // Enables 16 pixel sprites
-    TMS99X8.sprites16 = true;
-    TMS99X8_syncFlags();
+    TMS99X8_activateMode2(); 
 
     // Places the tiles in a way that are consecutive
     {
@@ -47,16 +35,17 @@ void initCanvas() {
         } while (++i != 0);
     }
     
-    TMS99X8_memcpy(MODE2_ADDRESS_PN0 + 0x0000, (const uint8_t *)scratchpad, 256);    
-    TMS99X8_memcpy(MODE2_ADDRESS_PN0 + 0x0100, (const uint8_t *)scratchpad, 256);    
-    TMS99X8_memcpy(MODE2_ADDRESS_PN0 + 0x0200, (const uint8_t *)scratchpad, 256);    
+    TMS99X8_memcpy_fast(MODE2_ADDRESS_PN0 + 0x0000, (const uint8_t *)scratchpad, 256);    
+    TMS99X8_memcpy_fast(MODE2_ADDRESS_PN0 + 0x0100, (const uint8_t *)scratchpad, 256);    
+    TMS99X8_memcpy_fast(MODE2_ADDRESS_PN0 + 0x0200, (const uint8_t *)scratchpad, 256);    
 
     // Prepares the pattern table for 4x1 mode
-	TMS99X8_memset(MODE2_ADDRESS_PG, 0x00, sizeof(T_PG));
+	TMS99X8_memset_fast(MODE2_ADDRESS_PG, 0x00, sizeof(T_PG));
 
-	TMS99X8_memset(MODE2_ADDRESS_CT, FWhite + BTransparent, sizeof(T_CT));
+	TMS99X8_memset_fast(MODE2_ADDRESS_CT, FWhite + BTransparent, sizeof(T_CT));
+
+   	TMS99X8_setFlags(TMS99X8_M2 | TMS99X8_ENABLE | TMS99X8_GINT | TMS99X8_SI | TMS99X8_MEM416K);
 }
-
 #include "tracks/tracks_common.h"
 #include "tracks/angles_common.h"
 
@@ -74,10 +63,8 @@ typedef struct {
 
 static Car player0, player1, player2, player3;
 
-
 static const uint8_t *pimg_start;
 static uint16_t temp_sp, temp_hl;
-
 
 
 static void push8_double_shadow_left(const uint16_t *pd) __z88dk_fastcall {
@@ -155,7 +142,7 @@ static void push8_double_shadow_right(const uint16_t *pd) __z88dk_fastcall {
 	}
 }
 
-#ifdef MSX
+#ifdef __SDCC
 static void push8_single(const uint16_t *ps) __z88dk_fastcall; 
 
 
@@ -726,23 +713,23 @@ static void printCanvasFullWidth(Car *player, uint16_t address) {
 	if (imap==0) {
 		ipy = player->y;
 		ipx = player->x;
-		mapper_load_segment(MODULE_SEGMENT(track1_png_a, PAGE_C),PAGE_C);
-		mapper_load_segment(MODULE_SEGMENT(track1_png_a, PAGE_C),PAGE_D);
+		ML_LOAD_SEGMENT_C(ML_SEGMENT_C(track1_png_a));
+		ML_LOAD_SEGMENT_D(ML_SEGMENT_C(track1_png_a));
 	} else if (imap==1) {
 		ipy = player->x;
 		ipx = 63*255-player->y;
-		mapper_load_segment(MODULE_SEGMENT(track1_png_b, PAGE_C),PAGE_C);
-		mapper_load_segment(MODULE_SEGMENT(track1_png_b, PAGE_C),PAGE_D);
+		ML_LOAD_SEGMENT_C(ML_SEGMENT_C(track1_png_b));
+		ML_LOAD_SEGMENT_D(ML_SEGMENT_C(track1_png_b));
 	} else if (imap==2) {
 		ipy = 63*255-player->y;
 		ipx = 63*255-player->x;
-		mapper_load_segment(MODULE_SEGMENT(track1_png_c, PAGE_C),PAGE_C);
-		mapper_load_segment(MODULE_SEGMENT(track1_png_c, PAGE_C),PAGE_D);
+		ML_LOAD_SEGMENT_C(ML_SEGMENT_C(track1_png_c));
+		ML_LOAD_SEGMENT_D(ML_SEGMENT_C(track1_png_c));
 	} else if (imap==3) {
 		ipy = 63*255-player->x;
 		ipx = player->y;
-		mapper_load_segment(MODULE_SEGMENT(track1_png_d, PAGE_C),PAGE_C);
-		mapper_load_segment(MODULE_SEGMENT(track1_png_d, PAGE_C),PAGE_D);		
+		ML_LOAD_SEGMENT_C(ML_SEGMENT_C(track1_png_d));
+		ML_LOAD_SEGMENT_D(ML_SEGMENT_C(track1_png_d));
 	}
 	
 	pimg_start = &track1_png_a[2*(64*(ipy/256)+(ipx/256))];
@@ -751,7 +738,7 @@ static void printCanvasFullWidth(Car *player, uint16_t address) {
 	TMS99X8_setPtr(address);
 	
 	uint8_t angleSelector = ((ipy/64)&3)*4*16+((ipx/64)&3)*16+((player->a+8)&15);
-	mapper_load_segment((const uint8_t)all_angle_segments[angleSelector],PAGE_B);
+	ML_LOAD_SEGMENT_B((const uint8_t)all_angle_segments[angleSelector]);
 
 	{
 		const uint16_t *ps = (const uint16_t *)all_angle_single[angleSelector];
@@ -820,30 +807,30 @@ static void printCanvasHalfWidth(Car *player, uint16_t address) {
 	if (imap==0) {
 		ipy = player->y;
 		ipx = player->x;
-		mapper_load_segment(MODULE_SEGMENT(track1_png_a, PAGE_C),PAGE_C);
-		mapper_load_segment(MODULE_SEGMENT(track1_png_a, PAGE_C),PAGE_D);
+		ML_LOAD_SEGMENT_C(ML_SEGMENT_C(track1_png_a));
+		ML_LOAD_SEGMENT_D(ML_SEGMENT_C(track1_png_a));
 	} else if (imap==1) {
 		ipy = player->x;
 		ipx = 63*255-player->y;
-		mapper_load_segment(MODULE_SEGMENT(track1_png_b, PAGE_C),PAGE_C);
-		mapper_load_segment(MODULE_SEGMENT(track1_png_b, PAGE_C),PAGE_D);
+		ML_LOAD_SEGMENT_C(ML_SEGMENT_C(track1_png_b));
+		ML_LOAD_SEGMENT_D(ML_SEGMENT_C(track1_png_b));
 	} else if (imap==2) {
 		ipy = 63*255-player->y;
 		ipx = 63*255-player->x;
-		mapper_load_segment(MODULE_SEGMENT(track1_png_c, PAGE_C),PAGE_C);
-		mapper_load_segment(MODULE_SEGMENT(track1_png_c, PAGE_C),PAGE_D);
+		ML_LOAD_SEGMENT_C(ML_SEGMENT_C(track1_png_c));
+		ML_LOAD_SEGMENT_D(ML_SEGMENT_C(track1_png_c));
 	} else if (imap==3) {
 		ipy = 63*255-player->x;
 		ipx = player->y;
-		mapper_load_segment(MODULE_SEGMENT(track1_png_d, PAGE_C),PAGE_C);
-		mapper_load_segment(MODULE_SEGMENT(track1_png_d, PAGE_C),PAGE_D);		
+		ML_LOAD_SEGMENT_C(ML_SEGMENT_C(track1_png_d));
+		ML_LOAD_SEGMENT_D(ML_SEGMENT_C(track1_png_d));
 	}
 	
 	pimg_start = &track1_png_a[2*(64*(ipy/256)+(ipx/256))];
 
 		
 	uint8_t angleSelector = ((ipy/64)&3)*4*16+((ipx/64)&3)*16+((player->a+8)&15);
-	mapper_load_segment((const uint8_t)all_angle_segments[angleSelector],PAGE_B);
+	ML_LOAD_SEGMENT_B((const uint8_t)all_angle_segments[angleSelector]);
 
 	{
 		const uint16_t *ps = (const uint16_t *)all_angle_single[angleSelector];
@@ -891,6 +878,7 @@ static void printCanvasHalfWidth(Car *player, uint16_t address) {
 	}
 }
 
+enum    { J_RIGHT=0x80,J_DOWN=0x40,J_UP=0x20,J_LEFT=0x10,J_DEL=0x08,J_INS=0x04,J_HOME=0x02,J_SPACE=0x01 };
 
 uint8_t keyboard_line_read(uint8_t line) __z88dk_fastcall;
 
@@ -944,7 +932,7 @@ void updateCar(Car *car, uint8_t k) {
 
 	}
 
-	mapper_load_segment(MODULE_SEGMENT(track1_png_a, PAGE_C),PAGE_C);
+	ML_LOAD_MODULE_C(track1_png_a);
 	
 	{
 		uint8_t road = track1_png_a[2*(64*(car->y/256)+(car->x/256))]&0xF;
@@ -1185,29 +1173,34 @@ void play4() {
 
 
 
-int main(void) {
+int main(void) __nonbanked {
 
     // Normal initialization routine
-    msxhal_init(); // Bare minimum initialization of the msx support 
+//    msxhal_init(); // Bare minimum initialization of the msx support 
     DI(); // This game has normally disabled interrupts. 
 
 	
   //msxhal_request60Hz();
   //msxhal_enableR800();
 
-    paged_isr.f = nullptr;
-    msxhal_install_isr(main_isr);      
+//    paged_isr.f = nullptr;
+//    msxhal_install_isr(main_isr);      
 
-	enable_keyboard_routine=0;
+//	enable_keyboard_routine=0;
 
-	puts("Press 1-4:");
-	while (true) {
-		uint8_t k = keyboard_line_read(0);
-		if (k==0x02) { play1(); }
-		if (k==0x04) { play2(); }
-		if (k==0x08) { play3(); }
-		if (k==0x10) { play4(); }
-		wait_frame();
-	}
+	ML_EXECUTE_A(main, 
+
+		puts("Press 1-4:");
+		while (true) {
+			uint8_t k;
+			
+				k = keyboard_line_read(0);
+				if (k==0x02) { play1(); }
+				if (k==0x04) { play2(); }
+				if (k==0x08) { play3(); }
+				if (k==0x10) { play4(); }
+			wait_frame();
+		}
+	);
     return 0;
 }
