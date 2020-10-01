@@ -71,15 +71,14 @@ static void push8_double_shadow_left(const uint16_t *pd) __z88dk_fastcall {
 	const uint8_t *pimg = pimg_start;
 	for (int colTile=0; colTile<7; colTile++) {
 		for (int row=0; row<4; row++) {
-			pimg += *pd++;	
-			TMS99X8_write(*pimg);
+			TMS99X8_write(*(pimg+*pd));
 			NOP();
 			NOP();
 			NOP();
 			NOP();
 			NOP();
 			NOP();
-			TMS99X8_write(*pimg);
+			TMS99X8_write(*(pimg+*pd++));
 			NOP();
 			NOP();
 			NOP();
@@ -88,15 +87,14 @@ static void push8_double_shadow_left(const uint16_t *pd) __z88dk_fastcall {
 	}
 
 	for (int row=0; row<4; row++) {
-		pimg += *pd++;	
-		TMS99X8_write(*pimg & 0xF0);
+		TMS99X8_write(*(pimg+*pd) & 0xF0);
 		NOP();
 		NOP();
 		NOP();
 		NOP();
 		NOP();
 		NOP();
-		TMS99X8_write(*pimg & 0xF0);
+		TMS99X8_write(*(pimg+*pd++) & 0xF0);
 		NOP();
 		NOP();
 		NOP();
@@ -108,8 +106,7 @@ static void push8_double_shadow_right(const uint16_t *pd) __z88dk_fastcall {
 	const uint8_t *pimg = pimg_start;
 
 	for (int row=0; row<4; row++) {
-		pimg += *pd++;	
-		TMS99X8_write(*pimg & 0xF0);
+		TMS99X8_write(*(pimg+*pd) & 0xF0);
 		NOP();
 		NOP();
 		NOP();
@@ -118,15 +115,14 @@ static void push8_double_shadow_right(const uint16_t *pd) __z88dk_fastcall {
 		NOP();
 		NOP();
 		NOP();
-		TMS99X8_write(*pimg & 0xF0);
+		TMS99X8_write(*(pimg+*pd++) & 0xF0);
 		NOP();
 		NOP();
 	}
 	
 	for (int colTile=1; colTile<8; colTile++) {
 		for (int row=0; row<4; row++) {
-			pimg += *pd++;	
-			TMS99X8_write(*pimg);
+			TMS99X8_write(*(pimg+*pd));
 			NOP();
 			NOP();
 			NOP();
@@ -135,7 +131,7 @@ static void push8_double_shadow_right(const uint16_t *pd) __z88dk_fastcall {
 			NOP();
 			NOP();
 			NOP();
-			TMS99X8_write(*pimg);
+			TMS99X8_write(*(pimg+*pd++));
 			NOP();
 			NOP();
 		}
@@ -156,263 +152,263 @@ static void push8_placeholder() {
 		ld (_temp_hl),hl
 		ld (_temp_sp),sp
 		ld sp, (_temp_hl)
-		ld hl, (_pimg_start)
+		ld de, (_pimg_start)
 		
 		ld c, #0x98
 				
-		pop de
+		pop hl
 		add hl, de
 		outi
 
-		pop de
+		pop hl
 		add hl, de
 		outi
 
-		pop de
+		pop hl
 		add hl, de
 		outi
 
-		pop de
+		pop hl
 		add hl, de
 		outi
 		
-		pop de
+		pop hl
 		add hl, de
 		outi
 
-		pop de
+		pop hl
 		add hl, de
 		outi
 
-		pop de
+		pop hl
 		add hl, de
 		outi
 
-		pop de
+		pop hl
 		add hl, de
 		outi
 		
-		pop de
+		pop hl
 		add hl, de
 		outi
 
-		pop de
+		pop hl
 		add hl, de
 		outi
 
-		pop de
+		pop hl
 		add hl, de
 		outi
 
-		pop de
+		pop hl
 		add hl, de
 		outi
 		
-		pop de
+		pop hl
 		add hl, de
 		outi
 
-		pop de
+		pop hl
 		add hl, de
 		outi
 
-		pop de
+		pop hl
 		add hl, de
 		outi
 
-		pop de
+		pop hl
 		add hl, de
 		outi
 		
-		pop de
+		pop hl
 		add hl, de
 		outi
 
-		pop de
+		pop hl
 		add hl, de
 		outi
 
-		pop de
+		pop hl
 		add hl, de
 		outi
 
-		pop de
+		pop hl
 		add hl, de
 		outi
 		
-		pop de
+		pop hl
 		add hl, de
 		outi
 
-		pop de
+		pop hl
 		add hl, de
 		outi
 
-		pop de
+		pop hl
 		add hl, de
 		outi
 
-		pop de
+		pop hl
 		add hl, de
 		outi
 		
-		pop de
+		pop hl
 		add hl, de
 		outi
 
-		pop de
+		pop hl
 		add hl, de
 		outi
 
-		pop de
+		pop hl
 		add hl, de
 		outi
 
-		pop de
+		pop hl
 		add hl, de
 		outi
 		
-		pop de
+		pop hl
 		add hl, de
 		outi
 
-		pop de
+		pop hl
 		add hl, de
 		outi
 
-		pop de
+		pop hl
 		add hl, de
 		outi
 
-		pop de
+		pop hl
 		add hl, de
 		outi
 		
-		pop de
+		pop hl
 		add hl, de
 		outi
 
-		pop de
+		pop hl
 		add hl, de
 		outi
 
-		pop de
+		pop hl
 		add hl, de
 		outi
 
-		pop de
+		pop hl
 		add hl, de
 		outi
 		
-		pop de
+		pop hl
 		add hl, de
 		outi
 
-		pop de
+		pop hl
 		add hl, de
 		outi
 
-		pop de
+		pop hl
 		add hl, de
 		outi
 
-		pop de
+		pop hl
 		add hl, de
 		outi
 		
-		pop de
+		pop hl
 		add hl, de
 		outi
 
-		pop de
+		pop hl
 		add hl, de
 		outi
 
-		pop de
+		pop hl
 		add hl, de
 		outi
 
-		pop de
+		pop hl
 		add hl, de
 		outi
 		
-		pop de
+		pop hl
 		add hl, de
 		outi
 
-		pop de
+		pop hl
 		add hl, de
 		outi
 
-		pop de
+		pop hl
 		add hl, de
 		outi
 
-		pop de
+		pop hl
 		add hl, de
 		outi
 		
-		pop de
+		pop hl
 		add hl, de
 		outi
 
-		pop de
+		pop hl
 		add hl, de
 		outi
 
-		pop de
+		pop hl
 		add hl, de
 		outi
 
-		pop de
+		pop hl
 		add hl, de
 		outi
 		
-		pop de
+		pop hl
 		add hl, de
 		outi
 
-		pop de
+		pop hl
 		add hl, de
 		outi
 
-		pop de
+		pop hl
 		add hl, de
 		outi
 
-		pop de
+		pop hl
 		add hl, de
 		outi
 		
-		pop de
+		pop hl
 		add hl, de
 		outi
 
-		pop de
+		pop hl
 		add hl, de
 		outi
 
-		pop de
+		pop hl
 		add hl, de
 		outi
 
-		pop de
+		pop hl
 		add hl, de
 		outi
 		
-		pop de
+		pop hl
 		add hl, de
 		outi
 
-		pop de
+		pop hl
 		add hl, de
 		outi
 
-		pop de
+		pop hl
 		add hl, de
 		outi
 
-		pop de
+		pop hl
 		add hl, de
 		outi		
 
@@ -423,224 +419,224 @@ static void push8_placeholder() {
 		ld (_temp_hl),hl
 		ld (_temp_sp),sp
 		ld sp, (_temp_hl)
-		ld hl, (_pimg_start)
+		ld de, (_pimg_start)
 		
-		pop de
+		pop hl
 		add hl, de
 		ld a, (hl)
 		out (#0x98), a
 
-		pop de
+		pop hl
 		nop
 		out (#0x98), a
 		add hl, de
 		ld a, (hl)
 		out (#0x98), a
 
-		pop de
+		pop hl
 		nop
 		out (#0x98), a
 		add hl, de
 		ld a, (hl)
 		out (#0x98), a
 
-		pop de
+		pop hl
 		nop
 		out (#0x98), a
 		add hl, de
 		ld a, (hl)
 		out (#0x98), a
 
-		pop de
-		nop
-		out (#0x98), a
-		add hl, de
-		ld a, (hl)
-		out (#0x98), a
-		
-		pop de
-		nop
-		out (#0x98), a
-		add hl, de
-		ld a, (hl)
-		out (#0x98), a
-
-		pop de
-		nop
-		out (#0x98), a
-		add hl, de
-		ld a, (hl)
-		out (#0x98), a
-
-		pop de
-		nop
-		out (#0x98), a
-		add hl, de
-		ld a, (hl)
-		out (#0x98), a
-
-		pop de
+		pop hl
 		nop
 		out (#0x98), a
 		add hl, de
 		ld a, (hl)
 		out (#0x98), a
 		
-		pop de
+		pop hl
 		nop
 		out (#0x98), a
 		add hl, de
 		ld a, (hl)
 		out (#0x98), a
 
-		pop de
+		pop hl
 		nop
 		out (#0x98), a
 		add hl, de
 		ld a, (hl)
 		out (#0x98), a
 
-		pop de
+		pop hl
+		nop
+		out (#0x98), a
+		add hl, de
+		ld a, (hl)
+		out (#0x98), a
+
+		pop hl
 		nop
 		out (#0x98), a
 		add hl, de
 		ld a, (hl)
 		out (#0x98), a
 		
-		pop de
+		pop hl
+		nop
+		out (#0x98), a
+		add hl, de
+		ld a, (hl)
+		out (#0x98), a
+
+		pop hl
+		nop
+		out (#0x98), a
+		add hl, de
+		ld a, (hl)
+		out (#0x98), a
+
+		pop hl
 		nop
 		out (#0x98), a
 		add hl, de
 		ld a, (hl)
 		out (#0x98), a
 		
-		pop de
-		nop
-		out (#0x98), a
-		add hl, de
-		ld a, (hl)
-		out (#0x98), a
-
-		pop de
-		nop
-		out (#0x98), a
-		add hl, de
-		ld a, (hl)
-		out (#0x98), a
-
-		pop de
+		pop hl
 		nop
 		out (#0x98), a
 		add hl, de
 		ld a, (hl)
 		out (#0x98), a
 		
-		pop de
+		pop hl
+		nop
+		out (#0x98), a
+		add hl, de
+		ld a, (hl)
+		out (#0x98), a
+
+		pop hl
+		nop
+		out (#0x98), a
+		add hl, de
+		ld a, (hl)
+		out (#0x98), a
+
+		pop hl
 		nop
 		out (#0x98), a
 		add hl, de
 		ld a, (hl)
 		out (#0x98), a
 		
-		pop de
-		nop
-		out (#0x98), a
-		add hl, de
-		ld a, (hl)
-		out (#0x98), a
-
-		pop de
-		nop
-		out (#0x98), a
-		add hl, de
-		ld a, (hl)
-		out (#0x98), a
-
-		pop de
+		pop hl
 		nop
 		out (#0x98), a
 		add hl, de
 		ld a, (hl)
 		out (#0x98), a
 		
-		pop de
+		pop hl
+		nop
+		out (#0x98), a
+		add hl, de
+		ld a, (hl)
+		out (#0x98), a
+
+		pop hl
+		nop
+		out (#0x98), a
+		add hl, de
+		ld a, (hl)
+		out (#0x98), a
+
+		pop hl
 		nop
 		out (#0x98), a
 		add hl, de
 		ld a, (hl)
 		out (#0x98), a
 		
-		pop de
-		nop
-		out (#0x98), a
-		add hl, de
-		ld a, (hl)
-		out (#0x98), a
-
-		pop de
-		nop
-		out (#0x98), a
-		add hl, de
-		ld a, (hl)
-		out (#0x98), a
-
-		pop de
+		pop hl
 		nop
 		out (#0x98), a
 		add hl, de
 		ld a, (hl)
 		out (#0x98), a
 		
-		pop de
+		pop hl
+		nop
+		out (#0x98), a
+		add hl, de
+		ld a, (hl)
+		out (#0x98), a
+
+		pop hl
+		nop
+		out (#0x98), a
+		add hl, de
+		ld a, (hl)
+		out (#0x98), a
+
+		pop hl
 		nop
 		out (#0x98), a
 		add hl, de
 		ld a, (hl)
 		out (#0x98), a
 		
-		pop de
-		nop
-		out (#0x98), a
-		add hl, de
-		ld a, (hl)
-		out (#0x98), a
-
-		pop de
-		nop
-		out (#0x98), a
-		add hl, de
-		ld a, (hl)
-		out (#0x98), a
-
-		pop de
+		pop hl
 		nop
 		out (#0x98), a
 		add hl, de
 		ld a, (hl)
 		out (#0x98), a
 		
-		pop de
+		pop hl
+		nop
+		out (#0x98), a
+		add hl, de
+		ld a, (hl)
+		out (#0x98), a
+
+		pop hl
+		nop
+		out (#0x98), a
+		add hl, de
+		ld a, (hl)
+		out (#0x98), a
+
+		pop hl
 		nop
 		out (#0x98), a
 		add hl, de
 		ld a, (hl)
 		out (#0x98), a
 		
-		pop de
+		pop hl
+		nop
+		out (#0x98), a
+		add hl, de
+		ld a, (hl)
+		out (#0x98), a
+		
+		pop hl
 		nop
 		out (#0x98), a
 		add hl, de
 		ld a, (hl)
 		out (#0x98), a
 
-		pop de
+		pop hl
 		nop
 		out (#0x98), a
 		add hl, de
 		ld a, (hl)
 		out (#0x98), a
 
-		pop de
+		pop hl
 		nop
 		out (#0x98), a
 		add hl, de
@@ -665,7 +661,7 @@ static void push8_single(const uint16_t *ps) __z88dk_fastcall {
 	for (int colTile=0; colTile<8; colTile++) {
 		for (int row=0; row<8; row++) {
 			pimg += *ps++;	
-			TMS99X8_write(*pimg);
+			TMS99X8_write(*(pimg + *ps++));
 			pimg++;
 		}
 	}
@@ -675,11 +671,10 @@ static void push8_double(const uint16_t *pd) __z88dk_fastcall {
 	const uint8_t *pimg = pimg_start;
 	for (int colTile=0; colTile<8; colTile++) {
 		for (int row=0; row<4; row++) {
-			pimg += *pd++;	
-			TMS99X8_write(*pimg);
+			TMS99X8_write(*(pimg + *pd++));
 			NOP();
 			NOP();
-			TMS99X8_write(*pimg);
+			TMS99X8_write(*(pimg + *pd++));
 		}
 	}
 }
@@ -1172,8 +1167,8 @@ void play4() {
 
 int main(void) __nonbanked {
 
+//	msxhal_request60Hz();
     DI(); // This game has normally disabled interrupts. 
-	msxhal_request60Hz();
 
 	ML_EXECUTE_A(main, 
 		puts("Press 1-4:");

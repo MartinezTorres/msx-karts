@@ -3,7 +3,7 @@
 //
 // Manuel Martinez (salutte@gmail.com)
 //
-// FLAGS: -std=gnu++14 -g `pkg-config opencv4 --cflags --libs` -Ofast -lpthread -fopenmp -lgomp -Wno-format-nonliteral -lSDL2
+// FLAGS: -std=gnu++14 -g `pkg-config opencv --cflags --libs` -Ofast -lpthread -fopenmp -lgomp -Wno-format-nonliteral -lSDL2
 
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc.hpp>
@@ -337,7 +337,7 @@ int main(int argc, char **argv) {
     
     {
 		std::ofstream tracks_common("tmp/tracks_common.h");
-		tracks_common << "#include <msxhal.h>" << std::endl;
+		tracks_common << "#include <megalinker.h>" << std::endl;
 		
 		for (int idx = 1; idx<argc; idx++) {
 
@@ -406,12 +406,12 @@ int main(int argc, char **argv) {
 				off << "};" << std::endl;
             
 				tracks_common << "extern const uint8_t " << track_name << "_" << char('a'+r) << "[64*64*2];" << std::endl;
-				tracks_common << "USING_MODULE(" << track_name << "_" << char('a'+r) << ", PAGE_C);" << std::endl;
+				tracks_common << "ML_REQUEST_C(" << track_name << "_" << char('a'+r) << ");" << std::endl;
 			}
 		}
 	
 		std::ofstream angles_common("tmp/angles_common.h");
-		angles_common << "#include <msxhal.h>" << std::endl;
+		angles_common << "#include <megalinker.h>" << std::endl;
 
 		for (int iy=0; iy<NUM_SUBDIVISIONS; iy++) {
 			for (int ix=0; ix<NUM_SUBDIVISIONS; ix++) {
@@ -422,26 +422,20 @@ int main(int argc, char **argv) {
 					std::ofstream off("tmp/" + name +".c");
 					off << "#include \"angles_common.h\"" << std::endl;
 					{
-						off << "const uint16_t " << name << "_single[4][4][8][8] = {\n";
+						off << "const uint16_t " << name << "_single[4][32][8] = {\n";
 						auto &DATA = LUT_SINGLE[iy*NUM_SUBDIVISIONS*NUM_ANGLES+ix*NUM_ANGLES+ia];
 						for (int rowTile=0; rowTile<4; rowTile++) {
 							off << "{";
-							for (int colGroup=0; colGroup<4; colGroup++) {
-								off << "{";
-								int pointer = 0;
-								for (int colTile=0; colTile<8; colTile++) {
-									off << "{\t";
-									for (int row=0; row<8; row++) {
-										int target = DATA[(colGroup*8+colTile)*32+rowTile*8+row];
+							for (int colTile=0; colTile<32; colTile++) {
+								off << "{\t";
+								for (int row=0; row<8; row++) {
+									int target = DATA[(colTile)*32+rowTile*8+row];
 
-										char buf[20];
-										snprintf(buf,20," 0x%04X, ",uint16_t(target-pointer));
-										pointer = target+1;
-										off << buf;
-									}
-									off << "},\n";
+									char buf[20];
+									snprintf(buf,20," 0x%04X, ",uint16_t(target));
+									off << buf;
 								}
-								off << "},";
+								off << "},\n";
 							}
 							off << "},";
 						}
@@ -449,36 +443,30 @@ int main(int argc, char **argv) {
 					}
 
 					{
-						off << "const uint16_t " << name << "_double[8][4][8][4] = {\n";
+						off << "const uint16_t " << name << "_double[8][32][4] = {\n";
 						auto &DATA = LUT_DOUBLE[iy*NUM_SUBDIVISIONS*NUM_ANGLES+ix*NUM_ANGLES+ia];
 						for (int rowTile=0; rowTile<8; rowTile++) {
 							off << "{";
-							for (int colGroup=0; colGroup<4; colGroup++) {
-								off << "{";
-								int pointer = 0;
-								for (int colTile=0; colTile<8; colTile++) {
-									off << "{\t";
-									for (int row=0; row<4; row++) {
+							for (int colTile=0; colTile<32; colTile++) {
+								off << "{\t";
+								for (int row=0; row<4; row++) {
 
-										int target = DATA[(colGroup*8+colTile)*32+rowTile*4+row];
+									int target = DATA[(colTile)*32+rowTile*4+row];
 
-										char buf[20];
-										snprintf(buf,20," 0x%04X, ",uint16_t(target-pointer));
-										pointer = target+0;
-										off << buf;
-									}
-									off << "},\n";
+									char buf[20];
+									snprintf(buf,20," 0x%04X, ",uint16_t(target));
+									off << buf;
 								}
-								off << "},";
+								off << "},\n";
 							}
 							off << "},";
 						}
 						off << "};" << std::endl;
 					}
 										
-					angles_common << "extern const uint16_t " << name << "_single[4][4][8][8];" << std::endl;
-					angles_common << "extern const uint16_t " << name << "_double[8][4][8][4];" << std::endl;
-					angles_common << "USING_MODULE(" << name << ", PAGE_B);" << std::endl;
+					angles_common << "extern const uint16_t " << name << "_single[4][32][8];" << std::endl;
+					angles_common << "extern const uint16_t " << name << "_double[8][32][4];" << std::endl;
+					angles_common << "ML_REQUEST_B(" << name << ");" << std::endl;
 				}
 			}
 		}
@@ -488,13 +476,13 @@ int main(int argc, char **argv) {
 			for (int ix=0; ix<NUM_SUBDIVISIONS; ix++) {
 				for (int ia=0; ia<NUM_ANGLES; ia++) {
 					std::string name = std::string("angle_") + "0123"[iy] + "0123"[ix] + "0123456789ABCDEF"[ia];
-					angles_common << "MAPPER_MODULE_" << name << "_PAGE_B, ";
+					angles_common << "__ML_SEGMENT_B_" << name << ", ";
 				}
 			}
 		}
 		angles_common << "};" << std::endl;
 
-		angles_common << "typedef const uint16_t T_angle_single[4][8][8];" << std::endl;
+		angles_common << "typedef const uint16_t T_angle_single[32][8];" << std::endl;
 		angles_common << "typedef const T_angle_single *T_angle_single_p;" << std::endl;
 		angles_common << "#define ANGLE_SINGLE static const T_angle_single_p all_angle_single[256] = { ";
 		for (int iy=0; iy<NUM_SUBDIVISIONS; iy++) {
@@ -507,7 +495,7 @@ int main(int argc, char **argv) {
 		}
 		angles_common << "};" << std::endl;
 
-		angles_common << "typedef const uint16_t T_angle_double[4][8][4];" << std::endl;
+		angles_common << "typedef const uint16_t T_angle_double[32][4];" << std::endl;
 		angles_common << "typedef const T_angle_double *T_angle_double_p;" << std::endl;
 		angles_common << "#define ANGLE_DOUBLE static const T_angle_double_p all_angle_double[256] = { ";
 		for (int iy=0; iy<NUM_SUBDIVISIONS; iy++) {

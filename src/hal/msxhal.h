@@ -201,6 +201,8 @@ INLINE uint8_t msxhal_get_msx_version()   { return BIOS_ROMID; }
 
 INLINE void msxhal_request60Hz() {
     __asm
+    push hl
+    push af
     ld   hl,#0xFFE8
     ld   a,(hl)
     and   #0xFD
@@ -208,6 +210,8 @@ INLINE void msxhal_request60Hz() {
     out  (_VDP1),a
     ld   a,#0x89
     out  (_VDP1),a
+    pop af
+    pop hl
     __endasm; 
 }
 
