@@ -1170,26 +1170,12 @@ void play4() {
 	}
 }
 
-
-
-
 int main(void) __nonbanked {
 
-    // Normal initialization routine
-//    msxhal_init(); // Bare minimum initialization of the msx support 
     DI(); // This game has normally disabled interrupts. 
-
-	
-  //msxhal_request60Hz();
-  //msxhal_enableR800();
-
-//    paged_isr.f = nullptr;
-//    msxhal_install_isr(main_isr);      
-
-//	enable_keyboard_routine=0;
+	msxhal_request60Hz();
 
 	ML_EXECUTE_A(main, 
-
 		puts("Press 1-4:");
 		while (true) {
 			uint8_t k;

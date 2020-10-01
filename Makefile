@@ -2,10 +2,17 @@ NAME := msx-karts
 
 CCZ80 = ~/sdcc-4.0.0/bin/sdcc
 ASM = ~/sdcc-4.0.0/bin/sdasz80
-OPENMSX_BIN = openmsx
 MEGALINKER = megalinker/megalinker
 
-MAX_ALLOCS = 2000
+OPENMSX_BIN = openmsx
+OPENMSX_DEF = $(OPENMSX_BIN)                          $(OPENMSX_PARAM) -carta 
+OPENMSX1    = $(OPENMSX_BIN) -machine C-BIOS_MSX1     $(OPENMSX_PARAM) -carta 
+OPENMSX1_JP = $(OPENMSX_BIN) -machine C-BIOS_MSX1_JP  $(OPENMSX_PARAM) -carta 
+OPENMSX2    = $(OPENMSX_BIN) -machine C-BIOS_MSX2     $(OPENMSX_PARAM) -carta 
+OPENMSX2P   = $(OPENMSX_BIN) -machine C-BIOS_MSX2+_JP $(OPENMSX_PARAM) -carta 
+OPENMSXTR   = $(OPENMSX_BIN) -machine Panasonic_FS-A1GT $(OPENMSX_PARAM) -carta 
+
+MAX_ALLOCS = 1000
 CCFLAGS_MSX   = -mz80 --disable-warning 110 --disable-warning 126 --no-std-crt0 --out-fmt-ihx --max-allocs-per-node $(MAX_ALLOCS) --allow-unsafe-read --nostdlib --no-xinit-opt --opt-code-speed --reserve-regs-iy 
 
 MSG = "\033[1;32m[$(@)]\033[1;31m\033[0m"
@@ -44,12 +51,55 @@ tmp/%.rel: %.c $(HEADERS)
 out/%.rom: $(OBJ_C) $(OBJ_ASM)
 	@echo $(MSG)
 	@mkdir -p $(@D)
-	$(MEGALINKER) $(OBJ_C) $(OBJ_ASM) $@
+	@$(MEGALINKER) $(OBJ_C) $(OBJ_ASM) $@
 
 rom: out/$(NAME).rom
 
-run: out/$(NAME).rom
-	@$(OPENMSX_BIN) $<
+msx: out/msx/$(NAME).rom
+	@echo $(MSG)
+	@mkdir -p $(@D)
+	@$(OPENMSX_DEF) $< || true
+
+msx1: out/msx/$(NAME).rom
+	@echo $(MSG)
+	@mkdir -p $(@D)
+	@$(OPENMSX1) $< || true
+
+msx1jp: out/msx/$(NAME).rom
+	@echo $(MSG)
+	@mkdir -p $(@D)
+	@$(OPENMSX1_JP) $< || true
+
+msx2: out/msx/$(NAME).rom
+	@echo $(MSG)
+	@mkdir -p $(@D)
+	@$(OPENMSX2) $< || true
+
+msx2p: out/msx/$(NAME).rom
+	@echo $(MSG)
+	@mkdir -p $(@D)
+	@$(OPENMSX2P) $< || true
+
+msxtr: out/msx/$(NAME).rom
+	@echo $(MSG)
+	@mkdir -p $(@D)
+	@$(OPENMSXTR) $< || true
 	
+##########################################################
+### UTILITIES SECTION
+
+INCLUDE := util
+.PRECIOUS:tmp/%
+tmp/%: %.cc
+	@echo $(MSG)
+	@mkdir -p $(@D)
+	@$(CXX) -o $@ $< $(shell echo `grep -m1 "^// FLAGS:" $< | cut -d: -f2-`)
+
+%: util/%.cc bin/% 
+	@echo $(MSG)
+	@true
+
 clean:
-	rm -rf out tmp
+	@echo -n "Cleaning... "
+	@rm -rf tmp out
+	@echo "Done!"
