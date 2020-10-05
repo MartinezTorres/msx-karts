@@ -120,9 +120,14 @@ int main(int argc, char **argv) {
  
 	Entity3D player, camera;
 	
-    player.pos[0] = img.rows / 2;
-    player.pos[1] = img.cols / 2;
+    player.pos[0] = img.rows / 2. + 0.0;
+    player.pos[1] = img.cols / 2. + 0.0 + 1;
+    player.pos[2] = 0;
+
+//    player.pos[0] = 1;
+//    player.pos[1] = 1;
     
+	camera.pos[0] = 0;
 	camera.pos[1] = -2;
 	camera.pos[2] = 1;
 	camera.rot = camera.rot*rotX(-14);
@@ -136,15 +141,17 @@ int main(int argc, char **argv) {
 
 		float FoV = 43;
 		float sFoV = std::sin(FoV * (M_PI / 180.0));
-		float f = (out.cols/2-0.5) * std::sqrt(1-sFoV*sFoV)/sFoV;
-//		std::cerr << "F: " << f << std::endl;
+		float f = (out.cols/2.-0.5) * std::sqrt(1.-sFoV*sFoV)/sFoV;
 		
 		for (int i=0; i<out.rows; i++) {
 			for (int j=0; j<out.cols; j++) {
 
 				cv::Vec3f l;
-				l = cv::Vec3f((((j+2)/4*4)+0.5-out.cols/2)/f,1.,-(i+0.5-out.rows/2)/f);
-				if (i>64) l = cv::Vec3f((((j+2)/4*4)+0.5-out.cols/2)/f,1.,-(((i+1)/2*2)+0.5-out.rows/2)/f);
+				l[0] =  (j+0.50-out.cols/2.)/f;
+				l[1] =  1.;
+				l[2] = -(i+0.50-out.rows/2.)/f;
+
+//				if (i>64) l = cv::Vec3f((((j+2.)/4.*4.)+0.5-out.cols/2.)/f,1.,-(((i+1.)/2.*2.)+0.5-out.rows/2.)/f);
 				
 				l = player.rot*camera.rot*l;
 				
@@ -155,31 +162,38 @@ int main(int argc, char **argv) {
 				
 				cv::Vec3f posV = player.pos;
 				
-				posV[0] = int(4*(posV[0]+0.125))*0.25;
-				posV[1] = int(4*(posV[1]+0.125))*0.25;
+				//posV[0] = std::round(4*posV[0])*0.25+0.125;
+				//posV[1] = std::round(4*posV[1])*0.25+0.125;
 				
 				
 				cv::Vec3f pos = posV + player.rot*camera.pos;
 				
 				
 				float d = (p0 - (pos)).dot(n)/l.dot(n);
-				cv::Vec3i p = d*l + pos;// - cv::Vec3f(0.5f, 0.5f, 0.5f);
+				cv::Vec3f pf = d*l + pos;// - cv::Vec3f(0.5f, 0.5f, 0.5f);
+				cv::Vec3i p; p[0]=std::floor(pf[0]); p[1]=std::floor(pf[1]); p[2]=std::floor(pf[2]);
 				//std::cerr << "d: " << (d*l + (player.pos+camera.pos)) << " " << d << std::endl;
+				
 				if (p[0]>=0 and p[1]>=0 and p[0]<img.rows and p[1]<img.cols) {
 					out(i,j) = img(p[0],p[1]);
 				} else {
-					out(i,j)=0;
+					out(i,j) = 0;
 				}
 				
-				cv::Vec3f pf = (d*l + pos);
-				if(1) if (cv::Vec3f(player.pos-pf).dot(player.pos-pf)<0.2) {
-					out(i,j)=0;
+				{
+					
+					if(1) if (sqrt(cv::Vec3f(posV-pf).dot(posV-pf))<0.25) {
+						out(i,j) = 0;
+					}
 				}
 				
 				if (i==32) out(i,j)=255;
 				if (i==64) out(i,j)=255;
 
-				if (i==92) out(i,j)=255;
+				if (i==95) out(i,j)=255;
+
+				if (j==128-17) out(i,j)=255;
+				if (j==127+17) out(i,j)=255;
 				
 			}
 		}

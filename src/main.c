@@ -1,7 +1,7 @@
-#include <megalinker.h>
+#include <common.h>
 
-#include <hal/msxhal.h>
-#include <hal/tms99X8.h>
+SIN_COS
+
 
 static void CHPUT(char c) __z88dk_fastcall;
 
@@ -20,8 +20,7 @@ static void puts(const char *str) __z88dk_fastcall {
 }
 
 
-T_SA SA;
-static uint8_t scratchpad[256];
+static T_SA SA;
 static void initCanvas() {
 
     // Activates mode 2 and clears the screen (in black)
@@ -46,832 +45,8 @@ static void initCanvas() {
 
    	TMS99X8_setFlags(TMS99X8_M2 | TMS99X8_ENABLE | TMS99X8_GINT | TMS99X8_SI | TMS99X8_MEM416K);
 }
-#include "tracks/tracks_common.h"
-#include "tracks/angles_common.h"
-
-
-ANGLE_SEGMENTS
-ANGLE_SINGLE
-ANGLE_DOUBLE
-SIN_COS
-
-typedef struct {
-	uint16_t x, y;
-	int16_t vx, vy;
-	uint8_t a;
-} Car;
 
 static Car player0, player1, player2, player3;
-
-static const uint8_t *pimg_start;
-static uint16_t temp_sp, temp_hl;
-
-
-static void push8_double_shadow_left(const uint16_t *pd) __z88dk_fastcall {
-	const uint8_t *pimg = pimg_start;
-	for (int colTile=0; colTile<7; colTile++) {
-		for (int row=0; row<4; row++) {
-			TMS99X8_write(*(pimg+*pd));
-			NOP();
-			NOP();
-			NOP();
-			NOP();
-			NOP();
-			NOP();
-			TMS99X8_write(*(pimg+*pd++));
-			NOP();
-			NOP();
-			NOP();
-			NOP();
-		}
-	}
-
-	for (int row=0; row<4; row++) {
-		TMS99X8_write(*(pimg+*pd) & 0xF0);
-		NOP();
-		NOP();
-		NOP();
-		NOP();
-		NOP();
-		NOP();
-		TMS99X8_write(*(pimg+*pd++) & 0xF0);
-		NOP();
-		NOP();
-		NOP();
-		NOP();
-	}
-}
-
-static void push8_double_shadow_right(const uint16_t *pd) __z88dk_fastcall {
-	const uint8_t *pimg = pimg_start;
-
-	for (int row=0; row<4; row++) {
-		TMS99X8_write(*(pimg+*pd) & 0xF0);
-		NOP();
-		NOP();
-		NOP();
-		NOP();
-		NOP();
-		NOP();
-		NOP();
-		NOP();
-		TMS99X8_write(*(pimg+*pd++) & 0xF0);
-		NOP();
-		NOP();
-	}
-	
-	for (int colTile=1; colTile<8; colTile++) {
-		for (int row=0; row<4; row++) {
-			TMS99X8_write(*(pimg+*pd));
-			NOP();
-			NOP();
-			NOP();
-			NOP();
-			NOP();
-			NOP();
-			NOP();
-			NOP();
-			TMS99X8_write(*(pimg+*pd++));
-			NOP();
-			NOP();
-		}
-	}
-}
-
-#ifdef __SDCC
-static void push8_single(const uint16_t *ps) __z88dk_fastcall; 
-
-
-static void push8_double(const uint16_t *pd) __z88dk_fastcall;
-
-static void push8_placeholder() {
-	
-	
-	__asm
-	_push8_single:
-		ld (_temp_hl),hl
-		ld (_temp_sp),sp
-		ld sp, (_temp_hl)
-		ld de, (_pimg_start)
-		
-		ld c, #0x98
-				
-		pop hl
-		add hl, de
-		outi
-
-		pop hl
-		add hl, de
-		outi
-
-		pop hl
-		add hl, de
-		outi
-
-		pop hl
-		add hl, de
-		outi
-		
-		pop hl
-		add hl, de
-		outi
-
-		pop hl
-		add hl, de
-		outi
-
-		pop hl
-		add hl, de
-		outi
-
-		pop hl
-		add hl, de
-		outi
-		
-		pop hl
-		add hl, de
-		outi
-
-		pop hl
-		add hl, de
-		outi
-
-		pop hl
-		add hl, de
-		outi
-
-		pop hl
-		add hl, de
-		outi
-		
-		pop hl
-		add hl, de
-		outi
-
-		pop hl
-		add hl, de
-		outi
-
-		pop hl
-		add hl, de
-		outi
-
-		pop hl
-		add hl, de
-		outi
-		
-		pop hl
-		add hl, de
-		outi
-
-		pop hl
-		add hl, de
-		outi
-
-		pop hl
-		add hl, de
-		outi
-
-		pop hl
-		add hl, de
-		outi
-		
-		pop hl
-		add hl, de
-		outi
-
-		pop hl
-		add hl, de
-		outi
-
-		pop hl
-		add hl, de
-		outi
-
-		pop hl
-		add hl, de
-		outi
-		
-		pop hl
-		add hl, de
-		outi
-
-		pop hl
-		add hl, de
-		outi
-
-		pop hl
-		add hl, de
-		outi
-
-		pop hl
-		add hl, de
-		outi
-		
-		pop hl
-		add hl, de
-		outi
-
-		pop hl
-		add hl, de
-		outi
-
-		pop hl
-		add hl, de
-		outi
-
-		pop hl
-		add hl, de
-		outi
-		
-		pop hl
-		add hl, de
-		outi
-
-		pop hl
-		add hl, de
-		outi
-
-		pop hl
-		add hl, de
-		outi
-
-		pop hl
-		add hl, de
-		outi
-		
-		pop hl
-		add hl, de
-		outi
-
-		pop hl
-		add hl, de
-		outi
-
-		pop hl
-		add hl, de
-		outi
-
-		pop hl
-		add hl, de
-		outi
-		
-		pop hl
-		add hl, de
-		outi
-
-		pop hl
-		add hl, de
-		outi
-
-		pop hl
-		add hl, de
-		outi
-
-		pop hl
-		add hl, de
-		outi
-		
-		pop hl
-		add hl, de
-		outi
-
-		pop hl
-		add hl, de
-		outi
-
-		pop hl
-		add hl, de
-		outi
-
-		pop hl
-		add hl, de
-		outi
-		
-		pop hl
-		add hl, de
-		outi
-
-		pop hl
-		add hl, de
-		outi
-
-		pop hl
-		add hl, de
-		outi
-
-		pop hl
-		add hl, de
-		outi
-		
-		pop hl
-		add hl, de
-		outi
-
-		pop hl
-		add hl, de
-		outi
-
-		pop hl
-		add hl, de
-		outi
-
-		pop hl
-		add hl, de
-		outi
-		
-		pop hl
-		add hl, de
-		outi
-
-		pop hl
-		add hl, de
-		outi
-
-		pop hl
-		add hl, de
-		outi
-
-		pop hl
-		add hl, de
-		outi
-		
-		pop hl
-		add hl, de
-		outi
-
-		pop hl
-		add hl, de
-		outi
-
-		pop hl
-		add hl, de
-		outi
-
-		pop hl
-		add hl, de
-		outi		
-
-		ld sp,(_temp_sp)
-		ret
-
-	_push8_double:
-		ld (_temp_hl),hl
-		ld (_temp_sp),sp
-		ld sp, (_temp_hl)
-		ld de, (_pimg_start)
-		
-		pop hl
-		add hl, de
-		ld a, (hl)
-		out (#0x98), a
-
-		pop hl
-		nop
-		out (#0x98), a
-		add hl, de
-		ld a, (hl)
-		out (#0x98), a
-
-		pop hl
-		nop
-		out (#0x98), a
-		add hl, de
-		ld a, (hl)
-		out (#0x98), a
-
-		pop hl
-		nop
-		out (#0x98), a
-		add hl, de
-		ld a, (hl)
-		out (#0x98), a
-
-		pop hl
-		nop
-		out (#0x98), a
-		add hl, de
-		ld a, (hl)
-		out (#0x98), a
-		
-		pop hl
-		nop
-		out (#0x98), a
-		add hl, de
-		ld a, (hl)
-		out (#0x98), a
-
-		pop hl
-		nop
-		out (#0x98), a
-		add hl, de
-		ld a, (hl)
-		out (#0x98), a
-
-		pop hl
-		nop
-		out (#0x98), a
-		add hl, de
-		ld a, (hl)
-		out (#0x98), a
-
-		pop hl
-		nop
-		out (#0x98), a
-		add hl, de
-		ld a, (hl)
-		out (#0x98), a
-		
-		pop hl
-		nop
-		out (#0x98), a
-		add hl, de
-		ld a, (hl)
-		out (#0x98), a
-
-		pop hl
-		nop
-		out (#0x98), a
-		add hl, de
-		ld a, (hl)
-		out (#0x98), a
-
-		pop hl
-		nop
-		out (#0x98), a
-		add hl, de
-		ld a, (hl)
-		out (#0x98), a
-		
-		pop hl
-		nop
-		out (#0x98), a
-		add hl, de
-		ld a, (hl)
-		out (#0x98), a
-		
-		pop hl
-		nop
-		out (#0x98), a
-		add hl, de
-		ld a, (hl)
-		out (#0x98), a
-
-		pop hl
-		nop
-		out (#0x98), a
-		add hl, de
-		ld a, (hl)
-		out (#0x98), a
-
-		pop hl
-		nop
-		out (#0x98), a
-		add hl, de
-		ld a, (hl)
-		out (#0x98), a
-		
-		pop hl
-		nop
-		out (#0x98), a
-		add hl, de
-		ld a, (hl)
-		out (#0x98), a
-		
-		pop hl
-		nop
-		out (#0x98), a
-		add hl, de
-		ld a, (hl)
-		out (#0x98), a
-
-		pop hl
-		nop
-		out (#0x98), a
-		add hl, de
-		ld a, (hl)
-		out (#0x98), a
-
-		pop hl
-		nop
-		out (#0x98), a
-		add hl, de
-		ld a, (hl)
-		out (#0x98), a
-		
-		pop hl
-		nop
-		out (#0x98), a
-		add hl, de
-		ld a, (hl)
-		out (#0x98), a
-		
-		pop hl
-		nop
-		out (#0x98), a
-		add hl, de
-		ld a, (hl)
-		out (#0x98), a
-
-		pop hl
-		nop
-		out (#0x98), a
-		add hl, de
-		ld a, (hl)
-		out (#0x98), a
-
-		pop hl
-		nop
-		out (#0x98), a
-		add hl, de
-		ld a, (hl)
-		out (#0x98), a
-		
-		pop hl
-		nop
-		out (#0x98), a
-		add hl, de
-		ld a, (hl)
-		out (#0x98), a
-		
-		pop hl
-		nop
-		out (#0x98), a
-		add hl, de
-		ld a, (hl)
-		out (#0x98), a
-
-		pop hl
-		nop
-		out (#0x98), a
-		add hl, de
-		ld a, (hl)
-		out (#0x98), a
-
-		pop hl
-		nop
-		out (#0x98), a
-		add hl, de
-		ld a, (hl)
-		out (#0x98), a
-		
-		pop hl
-		nop
-		out (#0x98), a
-		add hl, de
-		ld a, (hl)
-		out (#0x98), a
-		
-		pop hl
-		nop
-		out (#0x98), a
-		add hl, de
-		ld a, (hl)
-		out (#0x98), a
-
-		pop hl
-		nop
-		out (#0x98), a
-		add hl, de
-		ld a, (hl)
-		out (#0x98), a
-
-		pop hl
-		nop
-		out (#0x98), a
-		add hl, de
-		ld a, (hl)
-		out (#0x98), a
-
-		ld sp,(_temp_sp)
-
-		out (#0x98), a
-
-		ret
-	__endasm;
-	
-}
-
-
-
-#else
-
-static void push8_single(const uint16_t *ps) __z88dk_fastcall {
-	const uint8_t *pimg = pimg_start;
-	for (int colTile=0; colTile<8; colTile++) {
-		for (int row=0; row<8; row++) {
-			pimg += *ps++;	
-			TMS99X8_write(*(pimg + *ps++));
-			pimg++;
-		}
-	}
-}
-
-static void push8_double(const uint16_t *pd) __z88dk_fastcall {
-	const uint8_t *pimg = pimg_start;
-	for (int colTile=0; colTile<8; colTile++) {
-		for (int row=0; row<4; row++) {
-			TMS99X8_write(*(pimg + *pd++));
-			NOP();
-			NOP();
-			TMS99X8_write(*(pimg + *pd++));
-		}
-	}
-}
-
-#endif
-
-static void prepareCanvasFullWidth(uint16_t address) {
-
-
-    for (uint8_t i=0; i<2; i++) {
-		TMS99X8_memset(MODE2_ADDRESS_PG + address, 0x00, 32*8);
-		TMS99X8_memset(MODE2_ADDRESS_CT + address, 0x07, 32*8);
-		address += 32*8;
-	}
-
-
-    // Prepares the pattern table for 4x1 mode
-    for (uint8_t i=0; i<10; i++) {
-		TMS99X8_memset(MODE2_ADDRESS_PG + address, 0xF0, 32*8);
-		address += 32*8;
-	}
-}
-
-static void printCanvasFullWidth(Car *player, uint16_t address) {
-	
-	address += MODE2_ADDRESS_CT + 32*8*2;
-
-	uint8_t imap = ((player->a+8)/16)&3;
-	
-	uint16_t ipx, ipy;
-	if (imap==0) {
-		ipy = player->y;
-		ipx = player->x;
-		ML_LOAD_SEGMENT_C(ML_SEGMENT_C(track1_png_a));
-		ML_LOAD_SEGMENT_D(ML_SEGMENT_C(track1_png_a));
-	} else if (imap==1) {
-		ipy = player->x;
-		ipx = 63*255-player->y;
-		ML_LOAD_SEGMENT_C(ML_SEGMENT_C(track1_png_b));
-		ML_LOAD_SEGMENT_D(ML_SEGMENT_C(track1_png_b));
-	} else if (imap==2) {
-		ipy = 63*255-player->y;
-		ipx = 63*255-player->x;
-		ML_LOAD_SEGMENT_C(ML_SEGMENT_C(track1_png_c));
-		ML_LOAD_SEGMENT_D(ML_SEGMENT_C(track1_png_c));
-	} else if (imap==3) {
-		ipy = 63*255-player->x;
-		ipx = player->y;
-		ML_LOAD_SEGMENT_C(ML_SEGMENT_C(track1_png_d));
-		ML_LOAD_SEGMENT_D(ML_SEGMENT_C(track1_png_d));
-	}
-	
-	pimg_start = &track1_png_a[2*(64*(ipy/256)+(ipx/256))];
-
-		
-	TMS99X8_setPtr(address);
-	
-	uint8_t angleSelector = ((ipy/64)&3)*4*16+((ipx/64)&3)*16+((player->a+8)&15);
-	ML_LOAD_SEGMENT_B((const uint8_t)all_angle_segments[angleSelector]);
-
-	{
-		const uint16_t *ps = (const uint16_t *)all_angle_single[angleSelector];
-		for (uint8_t rowTile=0; rowTile<4; rowTile++) {
-			for (uint8_t colGroup=0; colGroup<4; colGroup++) {
-				push8_single(ps);
-				ps += 64;
-			}
-		}
-	}
-	
-	{
-		const uint16_t *pd = (const uint16_t *)all_angle_double[angleSelector];
-		for (uint8_t rowTile=0; rowTile<6; rowTile++) {
-			for (uint8_t colGroup=0; colGroup<4; colGroup++) {
-				push8_double(pd);
-				pd += 32;
-			}
-		}
-	}
-}
-
-static void prepareCanvasHalfWidth(uint16_t address) {
-
-    for (uint8_t i=0; i<2; i++) {
-		TMS99X8_memset(MODE2_ADDRESS_PG + address, 0x00, 16*8);
-		TMS99X8_memset(MODE2_ADDRESS_CT + address, 0x07, 16*8);
-		address += 32*8;
-	}
-
-    // Prepares the pattern table for 4x1 mode
-    for (uint8_t i=0; i<10; i++) {
-		TMS99X8_memset(MODE2_ADDRESS_PG + address, 0xF0, 16*8);
-		address += 32*8;
-	}
-	
-	address -= 12*32*8;
-	//address += 7*32*8 + 5*8;
-	scratchpad[0] = 0b11110101;
-	scratchpad[1] = 0b10101010;
-	scratchpad[2] = 0b01010101;
-	scratchpad[3] = 0b10101010;
-	scratchpad[4] = 0b11110101;
-	scratchpad[5] = 0b11111111;
-	scratchpad[6] = 0b11111111;
-	scratchpad[7] = 0b11111111;
-	
-	TMS99X8_memcpy(MODE2_ADDRESS_PG + address + 9*32*8 + 7*8, scratchpad, 8);
-
-	scratchpad[0] = 0b01011111;
-	scratchpad[1] = 0b10101011;
-	scratchpad[2] = 0b01010101;
-	scratchpad[3] = 0b10101011;
-	scratchpad[4] = 0b01011111;
-
-	TMS99X8_memcpy(MODE2_ADDRESS_PG + address + 9*32*8 + 8*8, scratchpad, 8);
-}
-
-static void printCanvasHalfWidth(Car *player, uint16_t address) {
-	
-	address += MODE2_ADDRESS_CT + 32*8*2;
-	
-	uint8_t imap = ((player->a+8)/16)&3;
-	
-	uint16_t ipx, ipy;
-	if (imap==0) {
-		ipy = player->y;
-		ipx = player->x;
-		ML_LOAD_SEGMENT_C(ML_SEGMENT_C(track1_png_a));
-		ML_LOAD_SEGMENT_D(ML_SEGMENT_C(track1_png_a));
-	} else if (imap==1) {
-		ipy = player->x;
-		ipx = 63*255-player->y;
-		ML_LOAD_SEGMENT_C(ML_SEGMENT_C(track1_png_b));
-		ML_LOAD_SEGMENT_D(ML_SEGMENT_C(track1_png_b));
-	} else if (imap==2) {
-		ipy = 63*255-player->y;
-		ipx = 63*255-player->x;
-		ML_LOAD_SEGMENT_C(ML_SEGMENT_C(track1_png_c));
-		ML_LOAD_SEGMENT_D(ML_SEGMENT_C(track1_png_c));
-	} else if (imap==3) {
-		ipy = 63*255-player->x;
-		ipx = player->y;
-		ML_LOAD_SEGMENT_C(ML_SEGMENT_C(track1_png_d));
-		ML_LOAD_SEGMENT_D(ML_SEGMENT_C(track1_png_d));
-	}
-	
-	pimg_start = &track1_png_a[2*(64*(ipy/256)+(ipx/256))];
-
-		
-	uint8_t angleSelector = ((ipy/64)&3)*4*16+((ipx/64)&3)*16+((player->a+8)&15);
-	ML_LOAD_SEGMENT_B((const uint8_t)all_angle_segments[angleSelector]);
-
-	{
-		const uint16_t *ps = (const uint16_t *)all_angle_single[angleSelector];
-		for (uint8_t rowTile=0; rowTile<4; rowTile++) {
-			TMS99X8_setPtr(address); address += 32*8;
-			ps += 64;
-			for (uint8_t colGroup=1; colGroup<3; colGroup++) {
-				push8_single(ps);
-				ps += 64;
-			}
-			ps += 64;
-			
-		}
-	}
-	
-	{
-		const uint16_t *pd = (const uint16_t *)all_angle_double[angleSelector];
-		for (uint8_t rowTile=0; rowTile<3; rowTile++) {
-			TMS99X8_setPtr(address); address += 32*8;
-			pd += 32;
-			for (uint8_t colGroup=1; colGroup<3; colGroup++) {
-				push8_double(pd);
-				pd += 32;
-			}
-			pd += 32;
-		}
-
-			TMS99X8_setPtr(address); address += 32*8;
-			pd += 32;
-			push8_double_shadow_left(pd);
-			pd += 32;
-			push8_double_shadow_right(pd);
-			pd += 32;
-			pd += 32;
-
-		for (uint8_t rowTile=0; rowTile<2; rowTile++) {
-			TMS99X8_setPtr(address); address += 32*8;
-			pd += 32;
-			for (uint8_t colGroup=1; colGroup<3; colGroup++) {
-				push8_double(pd);
-				pd += 32;
-			}
-			pd += 32;
-		}
-	}
-}
 
 enum    { J_RIGHT=0x80,J_DOWN=0x40,J_UP=0x20,J_LEFT=0x10,J_DEL=0x08,J_INS=0x04,J_HOME=0x02,J_SPACE=0x01 };
 
@@ -896,13 +71,18 @@ inline static void keyboard_line_read_placeholder(void) {
 
 void updateCar(Car *car, uint8_t k) {
 
+	car->leaning = 0;
+
 	if (k & J_LEFT) { 
 		
 		car->a+=63;
+		car->leaning = -1;
+
 	}
 	if (k & J_RIGHT) { 
 		
 		car->a+=1;
+		car->leaning = 1;
 	}
 	car->a = (car->a&63);
 	if (k & J_UP) { 
@@ -965,14 +145,15 @@ void play1() {
 		player0.vx = 0;
 		player0.vy = 0;
 		player0.a = 0;
+		player0.display_leaning = 0;
 	}
 	
 	
-	prepareCanvasFullWidth(0x0600);
+	full_prepare_canvas(0x0600);
 	
 	while (true) {
 		
-		printCanvasFullWidth(&player0, 0x600);
+		full_display_canvas(&player0, 0x600);
 
 		uint8_t k = keyboard_line_read(8);
 		updateCar(&player0,k);
@@ -991,18 +172,19 @@ void play2() {
 		player0.vx = 0;
 		player0.vy = 0;
 		player0.a = 0;
+		player0.display_leaning = 0;
 
 		player1 = player0;
 	}
 	
 	
-	prepareCanvasFullWidth(0x000);
-	prepareCanvasFullWidth(0xC00);
+	full_prepare_canvas(0x000);
+	full_prepare_canvas(0xC00);
 	
 	while (true) {
 		
-		printCanvasFullWidth(&player0, 0x000);
-		printCanvasFullWidth(&player1, 0xC00);
+		full_display_canvas(&player0, 0x000);
+		full_display_canvas(&player1, 0xC00);
 
 		{
 		
@@ -1036,22 +218,23 @@ void play3() {
 		player0.vx = 0;
 		player0.vy = 0;
 		player0.a = 0;
+		player0.display_leaning = 0;
 
 		player1 = player0;
 		player2 = player0;
 	}
 	
 	
-	prepareCanvasHalfWidth(0x000);
-	prepareCanvasHalfWidth(0x080);
-	prepareCanvasHalfWidth(0xC40);
+	half_prepare_canvas(0x000);
+	half_prepare_canvas(0x080);
+	half_prepare_canvas(0xC40);
 	
 	while (true) {
 		
-		printCanvasHalfWidth(&player0, 0x000);
-		printCanvasHalfWidth(&player0, 0x000);
-		printCanvasHalfWidth(&player1, 0x080);
-		printCanvasHalfWidth(&player2, 0xC40);
+		half_display_canvas(&player0, 0x000);
+		half_display_canvas(&player0, 0x000);
+		half_display_canvas(&player1, 0x080);
+		half_display_canvas(&player2, 0xC40);
 
 //		wait_frame();
 
@@ -1100,6 +283,7 @@ void play4() {
 		player0.vx = 0;
 		player0.vy = 0;
 		player0.a = 0;
+		player0.display_leaning = 0;
 
 		player1 = player0;
 		player2 = player0;
@@ -1107,17 +291,17 @@ void play4() {
 	}
 	
 	
-	prepareCanvasHalfWidth(0x000);
-	prepareCanvasHalfWidth(0x080);
-	prepareCanvasHalfWidth(0xC00);
-	prepareCanvasHalfWidth(0xC80);
+	half_prepare_canvas(0x000);
+	half_prepare_canvas(0x080);
+	half_prepare_canvas(0xC00);
+	half_prepare_canvas(0xC80);
 	
 	while (true) {
 		
-		printCanvasHalfWidth(&player0, 0x000);
-		printCanvasHalfWidth(&player1, 0x080);
-		printCanvasHalfWidth(&player2, 0xC00);
-		printCanvasHalfWidth(&player3, 0xC80);
+		half_display_canvas(&player0, 0x000);
+		half_display_canvas(&player1, 0x080);
+		half_display_canvas(&player2, 0xC00);
+		half_display_canvas(&player3, 0xC80);
 
 //		wait_frame();
 

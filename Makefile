@@ -2,7 +2,7 @@ NAME := msx-karts
 
 CCZ80 = ~/sdcc-4.0.0/bin/sdcc
 ASM = ~/sdcc-4.0.0/bin/sdasz80
-MEGALINKER = megalinker/megalinker
+MEGALINKER = ~/repos/manel/msx/megalinker/megalinker
 
 OPENMSX_BIN = openmsx
 OPENMSX_DEF = $(OPENMSX_BIN)                          $(OPENMSX_PARAM) -carta 
@@ -12,7 +12,7 @@ OPENMSX2    = $(OPENMSX_BIN) -machine C-BIOS_MSX2     $(OPENMSX_PARAM) -carta
 OPENMSX2P   = $(OPENMSX_BIN) -machine C-BIOS_MSX2+_JP $(OPENMSX_PARAM) -carta 
 OPENMSXTR   = $(OPENMSX_BIN) -machine Panasonic_FS-A1GT $(OPENMSX_PARAM) -carta 
 
-MAX_ALLOCS = 200000
+MAX_ALLOCS = 100
 CCFLAGS_MSX   = -mz80 --disable-warning 110 --disable-warning 126 --no-std-crt0 --out-fmt-ihx --max-allocs-per-node $(MAX_ALLOCS) --allow-unsafe-read --nostdlib --no-xinit-opt --opt-code-speed --reserve-regs-iy 
 
 MSG = "\033[1;32m[$(@)]\033[1;31m\033[0m"

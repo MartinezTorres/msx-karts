@@ -3,7 +3,7 @@
 //
 // Manuel Martinez (salutte@gmail.com)
 //
-// FLAGS: -std=gnu++14 -g `pkg-config opencv --cflags --libs` -Ofast -lpthread -fopenmp -lgomp -Wno-format-nonliteral -lSDL2
+// FLAGS: -std=gnu++14 -g `pkg-config opencv4 --cflags --libs` -Ofast -lpthread -fopenmp -lgomp -Wno-format-nonliteral -lSDL2
 
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc.hpp>
@@ -182,8 +182,8 @@ int main(int argc, char **argv) {
 							cv::Vec3i p = d*l + pos;
 							
 							
-							int jj = std::round(p[0]);
-							int ii = std::round(p[1]);
+							int jj = std::floor(p[0]);
+							int ii = std::floor(p[1]);
 							
 							if (ii>63) ii=63;
 							if (jj>63) jj=63;
@@ -271,8 +271,8 @@ int main(int argc, char **argv) {
 								cv::Vec3i p = d*l + pos;
 								
 								
-								int jj = std::round(p[0]);
-								int ii = std::round(p[1]);
+								int jj = std::floor(p[0]);
+								int ii = std::floor(p[1]);
 								
 								if (ii>63) ii=63;
 								if (jj>63) jj=63;

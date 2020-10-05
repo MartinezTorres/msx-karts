@@ -71,7 +71,7 @@ typedef uint8_t  U8x8  [8];
 #define REPEAT16(a) do { REPEAT8(a);  REPEAT8(a);  } while (false)
 #define REPEAT32(a) do { REPEAT16(a); REPEAT16(a); } while (false)
 #define REPEAT64(a) do { REPEAT32(a); REPEAT32(a); } while (false)
-#define REPEAT(a,N) do { \
+#define REPEAT(N, a) do { \
 	if (N&(1<<0)) REPEAT1(a);  \
 	if (N&(1<<1)) REPEAT2(a);  \
 	if (N&(1<<2)) REPEAT4(a);  \
