@@ -118,10 +118,10 @@ int main(int argc, char **argv) {
     
     cv::Mat3b img = cv::imread(argv[1]);
  
-	Entity3D player, camera;
+	Entity3D player, camera, target;
 	
-    player.pos[0] = img.rows / 2. + 0.0;
-    player.pos[1] = img.cols / 2. + 0.0 + 1;
+    player.pos[0] = img.rows / 2. - 0.125;
+    player.pos[1] = img.cols / 2. - 0.125 + 1;
     player.pos[2] = 0;
 
 //    player.pos[0] = 1;
@@ -131,6 +131,10 @@ int main(int argc, char **argv) {
 	camera.pos[1] = -2;
 	camera.pos[2] = 1;
 	camera.rot = camera.rot*rotX(-14);
+
+    target.pos[0] = player.pos[0] + 0;
+    target.pos[1] = player.pos[1] + 2;
+    target.pos[2] = 0;
 	
     for (;;) {
 
@@ -182,7 +186,11 @@ int main(int argc, char **argv) {
 				
 				{
 					
-					if(1) if (sqrt(cv::Vec3f(posV-pf).dot(posV-pf))<0.25) {
+					if(1) if (sqrt(cv::Vec3f(player.pos-pf).dot(player.pos-pf))<0.25) {
+						out(i,j) = 0;
+					}
+
+					if(1) if (sqrt(cv::Vec3f(target.pos-pf).dot(target.pos-pf))<0.25) {
 						out(i,j) = 0;
 					}
 				}
@@ -198,6 +206,64 @@ int main(int argc, char **argv) {
 			}
 		}
 		
+		if (0) {	
+			cv::Vec3f o = player.pos + player.rot*camera.pos;
+			cv::Vec3f l = target.pos - o;
+			
+			cv::Vec3f n;
+			n[0] =  0;
+			n[1] =  1;
+			n[2] =  0;
+			n = player.rot*camera.rot*n;
+
+			cv::Vec3f nj;
+			nj[0] =  1;
+			nj[1] =  0;
+			nj[2] =  0;
+			nj = player.rot*camera.rot*nj;
+
+			cv::Vec3f ni;
+			ni[0] =  0;
+			ni[1] =  0;
+			ni[2] =  -1;
+			ni = player.rot*camera.rot*ni;
+
+			//std::cerr << player.pos << " " << (player.rot*camera.pos) << " " <<  l << " " << n << std::endl;
+
+			cv::Vec3f p0 = o + n;
+			
+			float d = (p0 - o).dot(n)/l.dot(n);
+			
+			
+			cv::Vec3f in = o + l*d;
+			
+			int ii = std::floor(ni.dot(in-p0)*f + out.rows/2.);
+			int jj = std::floor(nj.dot(in-p0)*f + out.cols/2.);
+
+			std::cerr << ii << " " << jj << std::endl;
+				
+			if (ii>=0 and jj>=0 and ii<	out.rows and jj < out.cols) {
+				out(ii,jj) = cv::Vec3b(255,255,0);
+			}
+				
+		}
+
+		{	
+			
+			cv::Vec3f l = camera.rot.t()*(player.rot.t()*(target.pos - player.pos) - camera.pos);
+			
+			cv::Vec3f in = l*f/l[1];
+			
+			int ii = std::floor(-in[2] + out.rows/2.);
+			int jj = std::floor(in[0] + out.cols/2.);
+
+			std::cerr << ii << " " << jj << std::endl;
+				
+			if (ii>=0 and jj>=0 and ii<	out.rows and jj < out.cols) {
+				out(ii,jj) = cv::Vec3b(255,255,0);
+			}
+				
+		}
 		
 		
 		// x and y coordinates must be centered at 8,127.5

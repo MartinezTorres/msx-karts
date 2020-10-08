@@ -2,10 +2,58 @@
 
 #ifdef __SDCC
 
+static const uint16_t * push16_single(const uint16_t *ps) __z88dk_fastcall __naked {
+	UNUSED(ps);
+	__asm
+		ld iy, #0
+		add iy, sp
+		ld sp, hl
+		ld de, (_pimg_start)
+		
+		ld c, #0x98
+	__endasm;
+	REPEAT(16*8, 
+		__asm__("		pop hl");
+		__asm__("		add hl, de");
+		__asm__("		outi");
+	);
+	__asm
+		ld hl, #0
+		add hl, sp
+		ld sp,iy
+		ret
+	__endasm;
+}
+
+
+static const uint16_t * push14_single(const uint16_t *ps) __z88dk_fastcall __naked {
+	UNUSED(ps);
+	__asm
+		ld iy, #0
+		add iy, sp
+		ld sp, hl
+		ld de, (_pimg_start)
+		
+		ld c, #0x98
+	__endasm;
+	REPEAT(14*8, 
+		__asm__("		pop hl");
+		__asm__("		add hl, de");
+		__asm__("		outi");
+	);
+	__asm
+		ld hl, #0
+		add hl, sp
+		ld sp,iy
+		ret
+	__endasm;
+}
+
 static const uint16_t * push8_single(const uint16_t *ps) __z88dk_fastcall __naked {
 	UNUSED(ps);
 	__asm
-		ld (_temp_sp),sp
+		ld iy, #0
+		add iy, sp
 		ld sp, hl
 		ld de, (_pimg_start)
 		
@@ -17,7 +65,9 @@ static const uint16_t * push8_single(const uint16_t *ps) __z88dk_fastcall __nake
 		__asm__("		outi");
 	);
 	__asm
-		ld sp,(_temp_sp)
+		ld hl, #0
+		add hl, sp
+		ld sp,iy
 		ret
 	__endasm;
 }
@@ -25,7 +75,8 @@ static const uint16_t * push8_single(const uint16_t *ps) __z88dk_fastcall __nake
 static const uint16_t * push7_single(const uint16_t *ps) __z88dk_fastcall __naked {
 	UNUSED(ps);
 	__asm
-		ld (_temp_sp),sp
+		ld iy, #0
+		add iy, sp
 		ld sp, hl
 		ld de, (_pimg_start)
 		
@@ -37,22 +88,91 @@ static const uint16_t * push7_single(const uint16_t *ps) __z88dk_fastcall __nake
 		__asm__("		outi");
 	);
 	__asm
-		ld sp,(_temp_sp)
+		ld hl, #0
+		add hl, sp
+		ld sp,iy
 		ret
 	__endasm;
 }
 
+static const uint16_t * push16_double(const uint16_t *ps) __z88dk_fastcall __naked {
+	UNUSED(ps);
+	__asm
+		ld iy, #0
+		add iy, sp
+		ld sp, hl
+		ld de, (_pimg_start)
+		
+		pop hl
+		add hl, de
+		ld a, (hl)
+		out (#0x98), a
+
+	__endasm;
+	REPEAT(16*4-1, 
+		__asm__("		pop hl");
+		__asm__("		nop");
+		__asm__("		out (#0x98), a");
+		__asm__("		add hl, de");
+		__asm__("		ld a, (hl)");
+		__asm__("		out (#0x98), a");
+	);
+	
+	__asm
+		ld hl, #0
+		add hl, sp
+		out (#0x98), a
+		ld sp,iy
+		ret
+	__endasm;	
+}
+
+
+static const uint16_t * push14_double(const uint16_t *ps) __z88dk_fastcall __naked {
+	UNUSED(ps);
+	__asm
+		ld iy, #0
+		add iy, sp
+		ld sp, hl
+		ld de, (_pimg_start)
+		
+		pop hl
+		add hl, de
+		ld a, (hl)
+		out (#0x98), a
+
+	__endasm;
+	REPEAT(14*4-1, 
+		__asm__("		pop hl");
+		__asm__("		nop");
+		__asm__("		out (#0x98), a");
+		__asm__("		add hl, de");
+		__asm__("		ld a, (hl)");
+		__asm__("		out (#0x98), a");
+	);
+	
+	__asm
+		ld hl, #0
+		add hl, sp
+		out (#0x98), a
+		ld sp,iy
+		ret
+	__endasm;	
+}
+
+
 static const uint16_t * push8_double(const uint16_t *ps) __z88dk_fastcall __naked {
 	UNUSED(ps);
-__asm
-	ld (_temp_sp),sp
-	ld sp, hl
-	ld de, (_pimg_start)
-	
-	pop hl
-	add hl, de
-	ld a, (hl)
-	out (#0x98), a
+	__asm
+		ld iy, #0
+		add iy, sp
+		ld sp, hl
+		ld de, (_pimg_start)
+		
+		pop hl
+		add hl, de
+		ld a, (hl)
+		out (#0x98), a
 
 	__endasm;
 	REPEAT(32-1, 
@@ -65,27 +185,28 @@ __asm
 	);
 	
 	__asm
-	ld sp,(_temp_sp)
-
-	out (#0x98), a
-
-	ret
-__endasm;	
+		ld hl, #0
+		add hl, sp
+		out (#0x98), a
+		ld sp,iy
+		ret
+	__endasm;	
 }
 
 
 	
 static const uint16_t * push7_double(const uint16_t *ps) __z88dk_fastcall __naked {
 	UNUSED(ps);
-__asm
-	ld (_temp_sp),sp
-	ld sp, hl
-	ld de, (_pimg_start)
+	__asm
+		ld iy, #0
+		add iy, sp
+		ld sp, hl
+		ld de, (_pimg_start)
 	
-	pop hl
-	add hl, de
-	ld a, (hl)
-	out (#0x98), a
+		pop hl
+		add hl, de
+		ld a, (hl)
+		out (#0x98), a
 
 	__endasm;
 	REPEAT(32-1-4, 
@@ -96,14 +217,14 @@ __asm
 		__asm__("		ld a, (hl)");
 		__asm__("		out (#0x98), a");
 	);
-	
+		
 	__asm
-	ld sp,(_temp_sp)
-
-	out (#0x98), a
-
-	ret
-__endasm;	
+		ld hl, #0
+		add hl, sp
+		out (#0x98), a
+		ld sp,iy
+		ret
+	__endasm;	
 }
 
 
@@ -111,15 +232,16 @@ __endasm;
 static const uint16_t * push6_double(const uint16_t *pd) __z88dk_fastcall __naked {
 
 	UNUSED(pd);
-__asm
-	ld (_temp_sp),sp
-	ld sp, hl
-	ld de, (_pimg_start)
+	__asm
+		ld iy, #0
+		add iy, sp
+		ld sp, hl
+		ld de, (_pimg_start)
 	
-	pop hl
-	add hl, de
-	ld a, (hl)
-	out (#0x98), a
+		pop hl
+		add hl, de
+		ld a, (hl)
+		out (#0x98), a
 	__endasm;
 	REPEAT(32-1-8, 
 		__asm__("		pop hl");
@@ -130,27 +252,27 @@ __asm
 		__asm__("		out (#0x98), a");
 	);
 	__asm
-	ld sp,(_temp_sp)
-
-	out (#0x98), a
-
-	ret
-__endasm;	
-	
+		ld hl, #0
+		add hl, sp
+		out (#0x98), a
+		ld sp,iy
+		ret
+	__endasm;		
 }
 
 static const uint16_t * push5_double(const uint16_t *pd) __z88dk_fastcall __naked {
 
 	UNUSED(pd);
-__asm
-	ld (_temp_sp),sp
-	ld sp, hl
-	ld de, (_pimg_start)
-	
-	pop hl
-	add hl, de
-	ld a, (hl)
-	out (#0x98), a
+	__asm
+		ld iy, #0
+		add iy, sp
+		ld sp, hl
+		ld de, (_pimg_start)
+		
+		pop hl
+		add hl, de
+		ld a, (hl)
+		out (#0x98), a
 	__endasm;
 	REPEAT(32-1-12, 
 		__asm__("		pop hl");
@@ -161,28 +283,29 @@ __asm
 		__asm__("		out (#0x98), a");
 	);
 	__asm
-	ld sp,(_temp_sp)
-
-	out (#0x98), a
-
-	ret
-__endasm;	
+		ld hl, #0
+		add hl, sp
+		out (#0x98), a
+		ld sp,iy
+		ret
+	__endasm;		
 	
 }
 
 static const uint16_t * push4_double_black(const uint16_t *pd) __z88dk_fastcall __naked {
 
 	UNUSED(pd);
-__asm
-	ld (_temp_sp),sp
-	ld sp, hl
-	ld de, (_pimg_start)
+	__asm
+		ld iy, #0
+		add iy, sp
+		ld sp, hl
+		ld de, (_pimg_start)
 	
-	pop hl
-	add hl, de
-	ld a, (hl)
-	and #0x0F
-	out (#0x98), a
+		pop hl
+		add hl, de
+		ld a, (hl)
+		and #0x0F
+		out (#0x98), a
 	__endasm;
 
 	REPEAT(16-1, 
@@ -195,22 +318,24 @@ __asm
 	);
 
 	__asm
-	ld sp,(_temp_sp)
-
-	out (#0x98), a
-
-	ret
-__endasm;	
-	
+		ld hl, #0
+		add hl, sp
+		out (#0x98), a
+		ld sp,iy
+		ret
+	__endasm;		
 }
 
-static const uint16_t * push4_double_sprite_top_blue(const uint16_t *pd) __z88dk_fastcall __naked {
+static const uint16_t * push4_double_sprite_top(const uint16_t *pd) __z88dk_fastcall __naked {
 
 	UNUSED(pd);
-__asm
-	ld (_temp_sp),sp
-	ld sp, hl
-	ld de, (_pimg_start)
+	__asm
+		ld iy, #0
+		add iy, sp
+		ld sp, hl
+		ld de, (_pimg_start)
+
+		ld bc, (_tmp_car_color)
 
 	////////////////////////////////////////////////////////////////////
 	// FIRST TILE
@@ -250,7 +375,7 @@ __asm
 	////////////////////////////////////////////////////////////////////
 	// SECOND TILE
 	
-	ld a, #0x05      ; set blue
+	ld a, b          ; set blue
 	nop
 	nop
 	out (#0x98), a   ; blue
@@ -267,20 +392,20 @@ __asm
 	and #0x0F
 	out (#0x98), a   ; black + background
 	pop hl
-	ld a, #0x06      ; set dark red
+	ld a, c      ; set dark red
 	out (#0x98), a   ; dark red
 	nop
 	nop
 	nop
 	out (#0x98), a   ; dark read
 	pop hl
-	ld a, #0x06      ; set gray
+	ld a, b      ; set gray
 	out (#0x98), a   ; gray
 
 	////////////////////////////////////////////////////////////////////
 	// THIRD TILE
 	
-	ld a, #0x05      ; set blue
+	ld a, b          ; set blue
 	nop
 	nop
 	out (#0x98), a   ; blue
@@ -297,7 +422,7 @@ __asm
 	and #0x0F
 	out (#0x98), a   ; black + background
 	pop hl
-	ld a, #0x06      ; set dark red
+	ld a, c      ; set dark red
 	out (#0x98), a   ; dark red
 	nop
 	nop
@@ -305,7 +430,7 @@ __asm
 	out (#0x98), a   ; dark red
 	pop hl
 	add hl, de
-	ld a, #0x06      ; set dark red
+	ld a, b      ; set dark red
 	out (#0x98), a   ; dark red
 
 	////////////////////////////////////////////////////////////////////
@@ -337,24 +462,27 @@ __asm
 	and #0x0F
 	out (#0x98), a
 
-	ld sp,(_temp_sp)
 
+	ld hl, #0
 	add a, #0xD0        ; set magenta
 	out (#0x98), a   ; magenta
-
+	add hl, sp
+	ld sp,iy
 	ret
 __endasm;	
 	
 }
 
 
-static const uint16_t * push4_double_sprite_bottom_blue(const uint16_t *pd) __z88dk_fastcall __naked {
+static const uint16_t * push4_double_sprite_bottom(const uint16_t *pd) __z88dk_fastcall __naked {
 
 	UNUSED(pd);
-__asm
-	ld (_temp_sp),sp
-	ld sp, hl
-	ld de, (_pimg_start)
+	__asm
+		ld iy, #0
+		add iy, sp
+		ld sp, hl
+		ld de, (_pimg_start)
+		ld bc, (_tmp_car_color)
 
 	////////////////////////////////////////////////////////////////////
 	// FIRST TILE
@@ -395,66 +523,67 @@ __asm
 	////////////////////////////////////////////////////////////////////
 	// SECOND TILE
 	
-	ld a, #0x06      ; set gray
+	ld a, c          ; set gray
 	nop
 	nop
 	out (#0x98), a   ; gray
 	pop hl
-	ld a, #0x06      ; set gray
+	ld a, c          ; set gray
 	out (#0x98), a   ; gray
-	ld a, #0x06      ; set blue
+	ld a, b          ; set blue
 	nop
 	nop
 	out (#0x98), a   ; blue
 	pop hl
-	ld a, #0x06      ; set gray
+	ld a, c          ; set gray
 	out (#0x98), a   ; gray
-	ld a, #0x06      ; set blue
+	ld a, b          ; set blue
 	nop
 	nop
 	out (#0x98), a   ; blue
 	pop hl
-	ld a, #0x06      ; set gray
+	ld a, b          ; set gray
 	out (#0x98), a   ; gray
-	ld a, #0x06      ; set blue
+	ld a, c          ; set blue
 	nop
 	nop
 	out (#0x98), a   ; blue
 	pop hl
 	nop
+	ld a, c          ; set blue
 	out (#0x98), a   ; gray
 
 	////////////////////////////////////////////////////////////////////
 	// THIRD TILE
 	
-	ld a, #0x06      ; set gray
+	ld a, c      ; set gray
 	nop
 	nop
 	out (#0x98), a   ; gray
 	pop hl
-	ld a, #0x06      ; set gray
+	ld a, c      ; set gray
 	out (#0x98), a   ; gray
-	ld a, #0x06      ; set blue
+	ld a, b          ; set blue
 	nop
 	nop
 	out (#0x98), a   ; blue
 	pop hl
-	ld a, #0x06      ; set gray
+	ld a, c          ; set gray
 	out (#0x98), a   ; gray
-	ld a, #0x06      ; set blue
+	ld a, b          ; set blue
 	nop
 	nop
 	out (#0x98), a   ; blue
 	pop hl
-	ld a, #0x06      ; set gray
+	ld a, b          ; set gray
 	out (#0x98), a   ; gray
-	ld a, #0x06      ; set blue
+	ld a, c          ; set blue
 	nop
 	nop
 	out (#0x98), a   ; blue
 	pop hl
 	add hl, de
-	ld a, #0x06      ; set blue
+	ld a, c          ; set blue
 	out (#0x98), a   ; gray
 
 	////////////////////////////////////////////////////////////////////
@@ -486,10 +615,10 @@ __asm
 	and #0x0F
 	out (#0x98), a
 
-	ld sp,(_temp_sp)
-
-	out (#0x98), a   ; 
-
+	ld hl, #0
+	add hl, sp
+	out (#0x98), a
+	ld sp,iy
 	ret
 __endasm;	
 	

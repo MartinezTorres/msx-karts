@@ -110,7 +110,7 @@ void updateCar(Car *car, uint8_t k) {
 	ML_LOAD_MODULE_C(track1_png_a);
 	
 	{
-		uint8_t road = track1_png_a[2*(64*(car->y/256)+(car->x/256))]&0xF;
+		uint8_t road = track1_png_a[2*(64*((car->y+128)/256)+((car->x+128)/256))]&0xF;
 		if (road<2) {
 			car->vx = -car->vx;
 			car->vy = -car->vy;
@@ -284,24 +284,30 @@ void play4() {
 		player0.vy = 0;
 		player0.a = 0;
 		player0.display_leaning = 0;
+		player0.color = 256*BLightBlue + BDarkBlue;
 
 		player1 = player0;
+		player1.color = 256*BLightRed + BMediumRed;
+
 		player2 = player0;
+		player2.color = 256*BLightYellow + BDarkYellow;
+
 		player3 = player0;
+		player3.color = 256*BWhite + BGray;
 	}
 	
 	
 	half_prepare_canvas(0x000);
-	half_prepare_canvas(0x080);
-	half_prepare_canvas(0xC00);
-	half_prepare_canvas(0xC80);
+	half_prepare_canvas(0x090);
+	half_prepare_canvas(0xD00);
+	half_prepare_canvas(0xD90);
 	
 	while (true) {
 		
 		half_display_canvas(&player0, 0x000);
-		half_display_canvas(&player1, 0x080);
-		half_display_canvas(&player2, 0xC00);
-		half_display_canvas(&player3, 0xC80);
+		half_display_canvas(&player1, 0x090);
+		half_display_canvas(&player2, 0xD00);
+		half_display_canvas(&player3, 0xD90);
 
 //		wait_frame();
 

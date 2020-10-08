@@ -14,6 +14,7 @@ typedef struct {
 	uint16_t x, y;
 	int16_t vx, vy;
 	uint8_t a;
+	uint16_t color;
 	int8_t leaning, display_leaning;
 } Car;
 
@@ -21,7 +22,7 @@ typedef struct {
 // ram module;
 extern const uint8_t *pimg_start;
 extern uint8_t scratchpad[256];
-extern uint16_t temp_sp;
+extern uint16_t tmp_car_color;
 
 extern uint8_t player_left[3][32];
 extern uint8_t player_center[3][32];

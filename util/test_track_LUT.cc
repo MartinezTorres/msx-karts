@@ -140,11 +140,11 @@ int main(int argc, char **argv) {
 	
 	
 	for (int iy=0; iy<NUM_SUBDIVISIONS; iy++) {
-		std::cerr << "IY: " << iy << std::endl;
+//		std::cerr << "IY: " << iy << std::endl;
 		for (int ix=0; ix<NUM_SUBDIVISIONS; ix++) {
-			std::cerr << "IX: " << ix << std::endl;
+//			std::cerr << "IX: " << ix << std::endl;
 			for (int ia=0; ia<NUM_ANGLES; ia++) {
-				std::cerr << "IA: " << ia << std::endl;
+//				std::cerr << "IA: " << ia << std::endl;
 
 				cv::Mat1b debugImg(256,256,uint8_t(0));
 				{
@@ -238,7 +238,7 @@ int main(int argc, char **argv) {
 							}
 						}
 						
-						if (bestPos < -63) std::cerr << "bestPos: " << bestPos << std::endl;
+						if (bestPos < -160) std::cerr << "bestPos: " << bestPos << std::endl;
 
 						LUT_SINGLE[iy*NUM_SUBDIVISIONS*NUM_ANGLES+ix*NUM_ANGLES+ia].push_back(bestPos);
 					}
@@ -322,7 +322,7 @@ int main(int argc, char **argv) {
 							}
 						}
 						
-						if (bestPos < -63) std::cerr << "bestPos: " << bestPos << std::endl;
+						if (bestPos < -150) std::cerr << "bestPos: " << bestPos << std::endl;
 
 						LUT_DOUBLE[iy*NUM_SUBDIVISIONS*NUM_ANGLES+ix*NUM_ANGLES+ia].push_back(bestPos);
 					}
@@ -331,9 +331,9 @@ int main(int argc, char **argv) {
 		}
 	}
 			
-    player.pos[0] = img.rows / 2;
-    player.pos[1] = img.cols / 2;
-    
+    player.pos[0] = img.rows / 2 + 0.125;
+    player.pos[1] = img.cols / 2 + 0.125;
+    player.rot = cv::Matx33f::eye();
     
     {
 		std::ofstream tracks_common("tmp/tracks_common.h");
@@ -523,16 +523,14 @@ int main(int argc, char **argv) {
 	
     
     {
-		int playerx = 32*256;
-		int playery = 32*256;
+		int playerx = 32*256-64;
+		int playery = 33*256-64;
 
 		int playervx = 0;
 		int playervy = 0;
 
 		int playera = 0;
 
-		
-		cv::flip(img,img,0);
 		
 		std::vector<cv::Mat3b> maps;
 		maps.push_back(img.clone());
@@ -542,7 +540,6 @@ int main(int argc, char **argv) {
 		maps.push_back(img.clone());
 		cv::rotate(img, img, cv::ROTATE_90_CLOCKWISE);
 		maps.push_back(img.clone());
-		cv::rotate(img, img, cv::ROTATE_90_CLOCKWISE);
 		
 		for (;;) {
 
@@ -559,12 +556,12 @@ int main(int argc, char **argv) {
 				ipx = playerx;
 			} else if (imap==1) {
 				ipy = playerx;
-				ipx = 63*256-playery;
+				ipx = 63*256-1-playery;
 			} else if (imap==2) {
-				ipy = 63*256-playery;
-				ipx = 63*256-playerx;
+				ipy = 63*256-1-playery;
+				ipx = 63*256-1-playerx;
 			} else if (imap==3) {
-				ipy = 63*256-playerx;
+				ipy = 63*256-1-playerx;
 				ipx = playery;
 			}
 			
