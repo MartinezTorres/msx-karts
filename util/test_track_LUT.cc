@@ -3,7 +3,7 @@
 //
 // Manuel Martinez (salutte@gmail.com)
 //
-// FLAGS: -std=gnu++14 -g `pkg-config opencv4 --cflags --libs` -Ofast -lpthread -fopenmp -lgomp -Wno-format-nonliteral -lSDL2
+// FLAGS: -std=gnu++14 -g `pkg-config opencv4 --cflags --libs` -O1 -lpthread -fopenmp -lgomp -Wno-format-nonliteral -lSDL2
 
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc.hpp>
@@ -155,9 +155,12 @@ int main(int argc, char **argv) {
 						debugImg(127+32,127-32+i) = 128;
 				}
 				
-				player.rot = rotZ(+45 - ia * (90./NUM_ANGLES));
-				player.pos[0] = (1./NUM_SUBDIVISIONS)*ix + .5/NUM_SUBDIVISIONS;
-				player.pos[1] = (1./NUM_SUBDIVISIONS)*iy + .5/NUM_SUBDIVISIONS;
+				player.rot = rotZ(45 - ia * (90./NUM_ANGLES));
+				player.pos[0] = -0.5 + (1./NUM_SUBDIVISIONS)*ix + .5/NUM_SUBDIVISIONS;
+				player.pos[1] = -0.5 + (1./NUM_SUBDIVISIONS)*iy + .5/NUM_SUBDIVISIONS;
+
+				player.pos[0] = 0;
+				player.pos[1] = 0;
 
 				for (int itx=0; itx<32; itx++) {
 					for (int ity=32; ity<64; ity++) {
@@ -168,7 +171,7 @@ int main(int argc, char **argv) {
 						for (int itx8=0; itx8<8; itx8++) {
 							
 							float i = -(ity + 0.5 - 64)/f;
-							float j = (8 * itx + itx8 + 0.5 - 128)/f;
+							float j = -(8 * itx + itx8 + 0.5 - 128)/f;
 
 							cv::Vec3f l(j,1,i);
 							
@@ -179,11 +182,15 @@ int main(int argc, char **argv) {
 							
 							cv::Vec3f pos = player.pos + player.rot*camera.pos;
 							float d = (p0 - (pos)).dot(n)/l.dot(n);
-							cv::Vec3i p = d*l + pos;
+							cv::Vec3f p = d*l + pos;
 							
 							
-							int jj = std::floor(p[0]);
-							int ii = std::floor(p[1]);
+//							int jj = std::floor(p[0]);
+//							int ii = std::floor(p[1]);
+//							int jj = std::round(p[0]);
+//							int ii = std::round(p[1]);
+							int jj = std::floor(p[0] + ((1./NUM_SUBDIVISIONS)*ix + .5/NUM_SUBDIVISIONS));
+							int ii = std::floor(p[1] + ((1./NUM_SUBDIVISIONS)*iy + .5/NUM_SUBDIVISIONS));
 							
 							if (ii>63) ii=63;
 							if (jj>63) jj=63;
@@ -191,7 +198,7 @@ int main(int argc, char **argv) {
 							if (jj<-63) jj=-63;
 							
 							{
-								int iii = -ii+127;
+								int iii = ii+127;
 								int jjj = jj+127;
 								debugImg(iii,jjj)=255;
 							}
@@ -214,24 +221,8 @@ int main(int argc, char **argv) {
 							}
 						}
 
-						for (auto &ll : locationsRight) { // Is this really needed?
-							int score = locationsLeft[ll.first] + ll.second;
-							if (score > bestScore) {
-								bestScore = score;
-								bestPos = 2*ll.first;
-							}
-						}
-
 						for (auto &ll : locationsLeft) {
-							int score = ll.second + locationsRight[ll.first+1];
-							if (score > bestScore) {
-								bestScore = score;
-								bestPos = 2*ll.first+1;
-							}
-						}
-
-						for (auto &ll : locationsRight) { // Is this really needed?
-							int score = locationsLeft[ll.first-1] + ll.second;
+							int score = ll.second + locationsRight[ll.first-1];
 							if (score > bestScore) {
 								bestScore = score;
 								bestPos = 2*ll.first-2+1;
@@ -244,8 +235,8 @@ int main(int argc, char **argv) {
 					}
 				}
 				
-				//cv::imshow("debug", debugImg);
-				//cv::waitKey(0);
+//				cv::imshow("debug", debugImg);
+//				cv::waitKey(0);
 				
 				for (int itx=0; itx<32; itx++) {
 					for (int ity=64; ity<128; ity+=2) {
@@ -257,7 +248,7 @@ int main(int argc, char **argv) {
 							for (int ity2=0; ity2<2; ity2++) {
 								
 								float i = -(ity + ity2 + 0.5 - 64)/f;
-								float j = (8 * itx + itx8 + 0.5 - 128)/f;
+								float j = -(8 * itx + itx8 + 0.5 - 128)/f;
 
 								cv::Vec3f l(j,1,i);
 								
@@ -268,11 +259,15 @@ int main(int argc, char **argv) {
 								
 								cv::Vec3f pos = player.pos + player.rot*camera.pos;
 								float d = (p0 - (pos)).dot(n)/l.dot(n);
-								cv::Vec3i p = d*l + pos;
+								cv::Vec3f p = d*l + pos;
 								
 								
-								int jj = std::floor(p[0]);
-								int ii = std::floor(p[1]);
+//								int jj = std::floor(p[0]);
+//								int ii = std::floor(p[1]);
+//								int jj = std::round(p[0]);
+//								int ii = std::round(p[1]);
+								int jj = std::floor(p[0] + ((1./NUM_SUBDIVISIONS)*ix + .5/NUM_SUBDIVISIONS));
+								int ii = std::floor(p[1] + ((1./NUM_SUBDIVISIONS)*iy + .5/NUM_SUBDIVISIONS));
 								
 								if (ii>63) ii=63;
 								if (jj>63) jj=63;
@@ -298,24 +293,9 @@ int main(int argc, char **argv) {
 							}
 						}
 
-						for (auto &ll : locationsRight) { // Is this really needed?
-							int score = locationsLeft[ll.first] + ll.second;
-							if (score > bestScore) {
-								bestScore = score;
-								bestPos = 2*ll.first;
-							}
-						}
 
 						for (auto &ll : locationsLeft) {
-							int score = ll.second + locationsRight[ll.first+1];
-							if (score > bestScore) {
-								bestScore = score;
-								bestPos = 2*ll.first+1;
-							}
-						}
-
-						for (auto &ll : locationsRight) { // Is this really needed?
-							int score = locationsLeft[ll.first-1] + ll.second;
+							int score = ll.second + locationsRight[ll.first-1];
 							if (score > bestScore) {
 								bestScore = score;
 								bestPos = 2*ll.first-2+1;
@@ -366,7 +346,6 @@ int main(int argc, char **argv) {
 			for (auto &color : colors) std::swap(color[0],color[2]);
 				
 			cv::Mat3f imgc = cv::imread(argv[idx]);
-			cv::flip(imgc,imgc,0);
 			if (imgc.rows!=64 or imgc.cols!=64) throw std::runtime_error("Only 64x64 images supported");
 			cv::Mat1b imgp(64,64,uint8_t(0));
 			for (int i=0; i<64; i++) {
@@ -388,22 +367,23 @@ int main(int argc, char **argv) {
 				for (auto &&c : track_name)
 					if (c==s) c = '_';
 
+			cv::rotate(imgp, imgp, cv::ROTATE_90_CLOCKWISE);
+
 			for (int r=0; r<4; r++) {
-				
-				cv::Mat1b img = imgp.clone();
-				cv::rotate(imgp, imgp, cv::ROTATE_90_CLOCKWISE);
-					
+
 				std::ofstream off("tmp/" + track_name + "_" + char('a'+r) +".c");
 				off << "#include \"tracks_common.h\"" << std::endl;
 				off << "const uint8_t " << track_name << "_" << char('a'+r) << "[64*64*2] = {\n\t";
 				for (int i=0; i<64; i++) {
 					for (int j=0; j<64; j++) {
 						char buf[20];
-						snprintf(buf,20,"0x%X%X, 0x%X%X",imgp(i,j),imgp(i,j),imgp(i,j),imgp(i,j+1));
+						snprintf(buf,20,"0x%X%X, 0x%X%X",imgp(i,j),imgp(i,j),imgp(i,j+1),imgp(i,j));
 						off << buf << ((j+1)%8?", ":", \n\t");
 					}
 				}
 				off << "};" << std::endl;
+
+				cv::rotate(imgp, imgp, cv::ROTATE_90_CLOCKWISE);
             
 				tracks_common << "extern const uint8_t " << track_name << "_" << char('a'+r) << "[64*64*2];" << std::endl;
 				tracks_common << "ML_REQUEST_C(" << track_name << "_" << char('a'+r) << ");" << std::endl;
@@ -523,8 +503,9 @@ int main(int argc, char **argv) {
 	
     
     {
-		int playerx = 32*256-64;
-		int playery = 33*256-64;
+		//int playerx = (5 * 4) * 256;
+		int playerx = 5 * 4 * 256;
+		int playery = (63-24)* 4 * 256;
 
 		int playervx = 0;
 		int playervy = 0;
@@ -533,6 +514,7 @@ int main(int argc, char **argv) {
 
 		
 		std::vector<cv::Mat3b> maps;
+		cv::rotate(img, img, cv::ROTATE_90_CLOCKWISE);
 		maps.push_back(img.clone());
 		cv::rotate(img, img, cv::ROTATE_90_CLOCKWISE);
 		maps.push_back(img.clone());
@@ -550,35 +532,44 @@ int main(int argc, char **argv) {
 
 			int imap = ((playera+8)/16)%4;
 			
-			int ipx, ipy;
+			uint ipx, ipy;
 			if (imap==0) {
-				ipy = playery;
-				ipx = playerx;
+				ipx = (playery/256);
+				ipy = (playerx/256);
 			} else if (imap==1) {
-				ipy = playerx;
-				ipx = 63*256-1-playery;
+				ipx = 255 - (playerx/256);
+				ipy = (playery/256);
 			} else if (imap==2) {
-				ipy = 63*256-1-playery;
-				ipx = 63*256-1-playerx;
+				ipx = 255 -(playery/256);
+				ipy = 255 -(playerx/256);
 			} else if (imap==3) {
-				ipy = 63*256-1-playerx;
-				ipx = playery;
+				ipx = (playerx/256);
+				ipy = 255 -(playery/256);
 			}
-			
-			int iy = (ipy/64)%4;
-			int ix = (ipx/64)%4;
+						
+			int iy = ipy%4;
+			int ix = ipx%4;
 			int ia = (playera+8)%16;
 			cv::Mat3b &iamap = maps[imap];
-			int mapCoord = 64*(ipy/256)+(ipx/256);
+			int mapCoord = 64*(ipy/4)+(ipx/4);
 			
-			//std::cerr << mapCoord << std::endl;
+			iamap(0,0)=cv::Vec3b(0,0,255);
+			//cv::imshow("map", iamap);
+			//cv::waitKey(1);
+
+			std::cerr << ipx << " " << ipy << std::endl;
 			{
 				auto it = LUT_SINGLE[iy*NUM_SUBDIVISIONS*NUM_ANGLES+ix*NUM_ANGLES+ia].begin();
 				for (int j=0; j<32; j++) {
 					for (int i=0; i<32; i++) {
 						
+						//std::cerr << int(*it) << std::endl;
+						
 						int coord = 2*mapCoord + *it++;
+						//std::cerr << ipy/(256*4) << " " << ipx/(256*4) << " " << coord << std::endl;
 						while (coord>=8192) coord -= 8192;
+						while (coord<0) coord += 8192;
+//						std::cerr << "coord: " << coord << std::endl;
 						if (coord>=8192) {
 	//						std::cerr << "coord: " << coord << std::endl;
 							for (int itx8=0; itx8<8; itx8++) {
@@ -597,11 +588,11 @@ int main(int argc, char **argv) {
 							}
 						} else {
 							coord /= 2;
-							for (int itx4=0; itx4<4; itx4++) {
+							for (int itx4=4; itx4<8; itx4++) {
 								out(i,8*j+itx4) = iamap(coord/64,coord%64);
 							}
 							coord++;
-							for (int itx4=4; itx4<8; itx4++) {
+							for (int itx4=0; itx4<4; itx4++) {
 								out(i,8*j+itx4) = iamap(coord/64,coord%64);
 							}
 						}
@@ -616,8 +607,9 @@ int main(int argc, char **argv) {
 						
 						int coord = 2*mapCoord + *it++;
 						while (coord>=8192) coord -= 8192;
+						while (coord<0) coord += 8192;
+//						std::cerr << "coord: " << coord << std::endl;
 						if (coord>=8192) {
-	//						std::cerr << "coord: " << coord << std::endl;
 							for (int itx8=0; itx8<8; itx8++) {
 								out(i,8*j+itx8) = cv::Vec3b(255,0,0);
 								out(i+1,8*j+itx8) = cv::Vec3b(255,0,0);
@@ -637,12 +629,12 @@ int main(int argc, char **argv) {
 							}
 						} else {
 							coord /= 2;
-							for (int itx4=0; itx4<4; itx4++) {
+							for (int itx4=4; itx4<8; itx4++) {
 								out(i,8*j+itx4) = iamap(coord/64,coord%64);
 								out(i+1,8*j+itx4) = iamap(coord/64,coord%64);
 							}
 							coord++;
-							for (int itx4=4; itx4<8; itx4++) {
+							for (int itx4=0; itx4<4; itx4++) {
 								out(i,8*j+itx4) = iamap(coord/64,coord%64);
 								out(i+1,8*j+itx4) = iamap(coord/64,coord%64);
 							}
@@ -653,18 +645,42 @@ int main(int argc, char **argv) {
 					
 			SDL_PumpEvents();
 			const Uint8 *state = SDL_GetKeyboardState(NULL);
-			if (state[SDL_SCANCODE_LEFT]) { 
+
+			static int button_pressed = false;
+			if (state[SDL_SCANCODE_W]) { 
 				
-				playera--;
+				if (!button_pressed) playery+=256;
+				button_pressed = true;
+			} else if (state[SDL_SCANCODE_S]) { 
+				
+				if (!button_pressed) playery-=256;
+				button_pressed = true;
+			} else if (state[SDL_SCANCODE_A]) { 
+				
+				if (!button_pressed) playerx-=256;
+				button_pressed = true;
+			} else if (state[SDL_SCANCODE_D]) { 
+				
+				if (!button_pressed) playerx+=256;
+				button_pressed = true;
+			} else {
+				button_pressed = false;
 			}
-			if (state[SDL_SCANCODE_RIGHT]) { 
+
+
+
+			if (state[SDL_SCANCODE_LEFT]) { 
 				
 				playera++;
 			}
+			if (state[SDL_SCANCODE_RIGHT]) { 
+				
+				playera--;
+			}
 			if (state[SDL_SCANCODE_UP]) { 
 				
-				playervx += std::round(12*sin(playera/64. * 2 * M_PI));
-				playervy += std::round(12*cos(playera/64. * 2 * M_PI));
+				playervx += std::round(32*cos(playera/64. * 2 * M_PI));
+				playervy += std::round(32*sin(playera/64. * 2 * M_PI));
 			}
 			if (state[SDL_SCANCODE_DOWN]) { 
 

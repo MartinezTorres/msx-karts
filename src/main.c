@@ -75,20 +75,20 @@ void updateCar(Car *car, uint8_t k) {
 
 	if (k & J_LEFT) { 
 		
-		car->a+=63;
+		car->a+=1;
 		car->leaning = -1;
 
 	}
 	if (k & J_RIGHT) { 
 		
-		car->a+=1;
+		car->a+=63;
 		car->leaning = 1;
 	}
 	car->a = (car->a&63);
 	if (k & J_UP) { 
 		
-		car->vx += sin[car->a]>>3;
-		car->vy += cos[car->a]>>3;
+		car->vx += cos[car->a]>>1;
+		car->vy += sin[car->a]>>1;
 		//playervx += std::round(12*sin(playera/64. * 2 * M_PI));
 		//playervy += std::round(12*cos(playera/64. * 2 * M_PI));
 	}
@@ -107,18 +107,7 @@ void updateCar(Car *car, uint8_t k) {
 
 	}
 
-	ML_LOAD_MODULE_C(track1_png_a);
 	
-	{
-		uint8_t road = track1_png_a[2*(64*((car->y+128)/256)+((car->x+128)/256))]&0xF;
-		if (road<2) {
-			car->vx = -car->vx;
-			car->vy = -car->vy;
-		}
-	}
-	
-	
-
 	if (car->vx>0) {
 		car->vx -= (car->vx+15)/16;
 	} else {
@@ -130,8 +119,108 @@ void updateCar(Car *car, uint8_t k) {
 		car->vy -= (car->vy-15)/16;
 	}
 
+
+	{
+		uint16_t px = car->x + car->vx;
+		uint16_t py = car->y + car->vy;
+		ML_LOAD_MODULE_C(track1_png_a);
+		uint8_t roadx = track1_png_a[2*(64*(px/(256*4))+(car->y/(256*4)))]&0xF;
+		uint8_t roady = track1_png_a[2*(64*(car->x/(256*4))+(py/(256*4)))]&0xF;
+		
+		if (roadx<2) {
+
+			car->vx = -car->vx;
+
+			uint8_t a = car->a & 31;
+			if (a>16) a = 32-a;
+			
+			if (a<10) { // frontal hit
+	
+				if (car->vx>0) {
+					car->vx -= (car->vx+1)/2;
+				} else {
+					car->vx -= (car->vx-1)/2;
+				}
+	
+				if ( car->a < 16) {
+					car->a += 1;
+				} else if (car->a <32) { 
+					car->a -= 1;
+				} else if (car->a <48) { 
+					car->a += 1;
+				} else {
+					car->a -= 1;
+				}
+				
+
+			} else {
+				if (car->vx>0) {
+					car->vx -= (car->vx+7)/8;
+				} else {
+					car->vx -= (car->vx-7)/8;
+				}
+	
+				if ( car->a < 16) {
+					car->a += 3;
+				} else if (car->a <32) { 
+					car->a -= 3;
+				} else if (car->a <48) { 
+					car->a += 3;
+				} else {
+					car->a -= 3;
+				}
+			}
+		}
+		if (roady<2) {
+
+			car->vy = -car->vy;
+
+			uint8_t a = car->a & 31;
+			if (a>16) a = 32-a;
+			
+			if (16-a < 10) { // frontal hit
+	
+				if (car->vy>0) {
+					car->vy -= (car->vy+1)/2;
+				} else {
+					car->vy -= (car->vy-1)/2;
+				}
+	
+				if ( car->a < 16) {
+					car->a -= 1;
+				} else if (car->a <32) { 
+					car->a += 1;
+				} else if (car->a <48) { 
+					car->a -= 1;
+				} else {
+					car->a += 1;
+				}
+
+
+			} else {
+				if (car->vy>0) {
+					car->vy -= (car->vy+7)/8;
+				} else {
+					car->vy -= (car->vy-7)/8;
+				}
+	
+				if ( car->a < 16) {
+					car->a -= 3;
+				} else if (car->a <32) { 
+					car->a += 3;
+				} else if (car->a <48) { 
+					car->a -= 3;
+				} else {
+					car->a += 3;
+				}
+			}
+		}
+	
+		
+	}
+
 	car->x += car->vx;
-	car->y += car->vy;	
+	car->y += car->vy;
 }
 
 void play1() {
@@ -278,8 +367,8 @@ void play4() {
 
 	{
 		
-		player0.x = 32*256;
-		player0.y = 32*256;
+		player0.x = 5*4*256 + 1*256 + 15;
+		player0.y = (63-24)*4*256 + 1*256 + 15;
 		player0.vx = 0;
 		player0.vy = 0;
 		player0.a = 0;
@@ -361,6 +450,7 @@ int main(void) __nonbanked {
     DI(); // This game has normally disabled interrupts. 
 
 	ML_EXECUTE_A(main, 
+		play4();
 		puts("Press 1-4:");
 		while (true) {
 			uint8_t k;

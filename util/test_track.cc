@@ -110,13 +110,118 @@ static int8_t displayFramebufferSDL() {
 		return 0;
 }
 
+static cv::Mat3b sprites;
+
+static inline void put_fish_sprite(cv::Mat3b img, float si, float sj, float dist, cv::Vec3b color) {
+	
+	for (int i=0; i<16; i++) {
+		for (int j=0; j<16; j++) {
+			int pi=0, pj=0;
+			if (dist>34) {pi = 0; pj = 16;}
+			if (dist>50) {pi = 16; pj = 16;}
+			if (dist>58) continue;
+
+			if (sprites( pi + i, pj + j)[0]>128) continue;
+			
+			int ii = std::round(si-16+i);
+			int ij = std::round(sj-8+j);
+			if (ii<0) continue;
+			if (ij<0) continue;
+			if (ii>=img.rows) continue;
+			if (ij>=img.cols) continue;
+					
+			img(ii,ij) = color;
+		}
+	}
+}
+
+
+static inline void put_car_sprite(cv::Mat3b img, float si, float sj, float dist, int angle, cv::Vec3b color) {
+	
+
+	if (dist<32) {
+		for (int i=0; i<32; i++) {
+			for (int j=0; j<32; j++) {
+				int pi=0, pj=0;
+				if (dist<16) {
+					if (angle==0 or angle==4) { pi = 0; pj = 32;}
+					if (angle==1) { pi = 32; pj = 96;}
+					if (angle==2 or angle==3) { pi = 32; pj = 64;}
+					if (angle==5 or angle==6) { pi = 32; pj = 32;}
+					if (angle==7) { pi = 32; pj = 0;}
+				} else if (dist<32) {
+					if (angle==0 or angle==4) { pi = 0; pj = 64;}
+					if (angle==1) { pi = 64; pj = 96;}
+					if (angle==2 or angle==3) { pi = 64; pj = 64;}
+					if (angle==5 or angle==6) { pi = 64; pj = 32;}
+					if (angle==7) { pi = 64; pj = 0;}
+				}
+
+				if (sprites( pi + i, pj + j)[0]>128) continue;
+				
+				int ii = std::round(si-32+i);
+				int ij = std::round(sj-16+j);
+				if (ii<0) continue;
+				if (ij<0) continue;
+				if (ii>=img.rows) continue;
+				if (ij>=img.cols) continue;
+						
+				img(ii,ij) = color;
+			}
+		}	
+	} else {
+		for (int i=0; i<16; i++) {
+			for (int j=0; j<16; j++) {
+				int pi=0, pj=0;
+				if (dist<38) {
+					if (angle==0 or angle==4) { pi =  0; pj = 96;}
+					if (angle==1)             { pi = 96; pj = 48;}
+					if (angle==2 or angle==3) { pi = 96; pj = 32;}
+					if (angle==5 or angle==6) { pi = 96; pj = 16;}
+					if (angle==7)             { pi = 96; pj =  0;}
+				} else if (dist<42) {
+					if (angle==0 or angle==4) { pi =  0; pj = 112;}
+					if (angle==1)             { pi = 96; pj = 64+48;}
+					if (angle==2 or angle==3) { pi = 96; pj = 64+32;}
+					if (angle==5 or angle==6) { pi = 96; pj = 64+16;}
+					if (angle==7)             { pi = 96; pj = 64+ 0;}
+				} else if (dist<46) {
+					if (angle==0 or angle==4) { pi = 16; pj = 96;}
+					if (angle==1)             { pi =112; pj = 48;}
+					if (angle==2 or angle==3) { pi =112; pj = 32;}
+					if (angle==5 or angle==6) { pi =112; pj = 16;}
+					if (angle==7)             { pi =112; pj =  0;}
+				} else if (dist<51) {pi =112; pj = 64;
+				} else if (dist<55) {pi =112; pj = 80;
+				} else if (dist<58) {pi =112; pj = 96;
+				} else if (dist<60) {pi =112; pj =112;
+				} else continue;
+
+				if (sprites( pi + i, pj + j)[0]>128) continue;
+				
+				int ii = std::round(si-16+i);
+				int ij = std::round(sj-8+j);
+				if (ii<0) continue;
+				if (ij<0) continue;
+				if (ii>=img.rows) continue;
+				if (ij>=img.cols) continue;
+						
+				img(ii,ij) = color;
+			}
+		}
+	}
+}
+
+
 int main(int argc, char **argv) {
 	
 	initSDL();
 	
 	double deg2rad = M_PI / 180.0;
     
-    cv::Mat3b img = cv::imread(argv[1]);
+    sprites = cv::imread(argv[1]);
+    
+    cv::Mat3b img = cv::imread(argv[2]);
  
 	Entity3D player, camera, target;
 	
@@ -124,8 +229,8 @@ int main(int argc, char **argv) {
     player.pos[1] = img.cols / 2. - 0.125 + 1;
     player.pos[2] = 0;
 
-//    player.pos[0] = 1;
-//    player.pos[1] = 1;
+    player.pos[0] = 24;
+    player.pos[1] = 1;
     
 	camera.pos[0] = 0;
 	camera.pos[1] = -2;
@@ -175,7 +280,10 @@ int main(int argc, char **argv) {
 				
 				float d = (p0 - (pos)).dot(n)/l.dot(n);
 				cv::Vec3f pf = d*l + pos;// - cv::Vec3f(0.5f, 0.5f, 0.5f);
-				cv::Vec3i p; p[0]=std::floor(pf[0]); p[1]=std::floor(pf[1]); p[2]=std::floor(pf[2]);
+				cv::Vec3i p; 
+				p[0]=std::floor(pf[0]); 
+				p[1]=std::floor(pf[1]); 
+				p[2]=std::floor(pf[2]);
 				//std::cerr << "d: " << (d*l + (player.pos+camera.pos)) << " " << d << std::endl;
 				
 				if (p[0]>=0 and p[1]>=0 and p[0]<img.rows and p[1]<img.cols) {
@@ -240,12 +348,16 @@ int main(int argc, char **argv) {
 			int ii = std::floor(ni.dot(in-p0)*f + out.rows/2.);
 			int jj = std::floor(nj.dot(in-p0)*f + out.cols/2.);
 
-			std::cerr << ii << " " << jj << std::endl;
+			//std::cerr << ii << " " << jj << std::endl;
 				
 			if (ii>=0 and jj>=0 and ii<	out.rows and jj < out.cols) {
 				out(ii,jj) = cv::Vec3b(255,255,0);
 			}
 				
+		}
+		
+		{
+			//std::cerr << "Distance to Target: " << cv::norm(target.pos-(player.pos + player.rot*camera.pos)) << std::endl;
 		}
 
 		{	
@@ -257,13 +369,65 @@ int main(int argc, char **argv) {
 			int ii = std::floor(-in[2] + out.rows/2.);
 			int jj = std::floor(in[0] + out.cols/2.);
 
-			std::cerr << ii << " " << jj << std::endl;
+			//std::cerr << ii << " " << jj << std::endl;
 				
 			if (ii>=0 and jj>=0 and ii<	out.rows and jj < out.cols) {
 				out(ii,jj) = cv::Vec3b(255,255,0);
 			}
 				
 		}
+
+		for (int i=0; i<img.rows; i++) {
+			for (int j=0; j<img.cols; j++) {
+				if (img(i,j)[1]!=0x67) continue;
+				
+				cv::Vec3f tg = {i+0.5f,j+0.5f,0.f};
+				
+				cv::Vec3f l = camera.rot.t()*(player.rot.t()*(tg - player.pos) - camera.pos);
+				
+				cv::Vec3f in = l*f/l[1];
+				
+				int ii = std::floor(-in[2] + out.rows/2.);
+				int jj = std::floor(in[0] + out.cols/2.);
+				
+				//float dist = cv::norm(tg-(player.pos + player.rot*camera.pos));
+				
+				float dist = 96-ii;
+
+				if (ii>=32 and jj>=0 and ii<	out.rows and jj < out.cols) {
+					put_fish_sprite(out,ii,jj,dist,cv::Vec3b(169,91,99));
+				}
+			}
+		}
+
+		{	
+			
+			cv::Vec3f l = camera.rot.t()*(player.rot.t()*(target.pos - player.pos) - camera.pos);
+			
+			cv::Vec3f in = l*f/l[1];
+			
+			int ii = std::floor(-in[2] + out.rows/2.);
+			int jj = std::floor(in[0] + out.cols/2.);
+
+			//std::cerr << ii << " " << jj << std::endl;
+				
+//			float dist = cv::norm(target.pos-(player.pos + player.rot*camera.pos));
+
+			float dist = 96-ii;
+			std::cerr << dist << std::endl;
+
+			if (ii>32 and jj>=0 and ii<	out.rows and jj < out.cols) {
+				put_car_sprite(out,ii,jj,dist,0,cv::Vec3b(0,0,0));
+			}				
+		}
+		
+		// 16 angles x 4096 possibilities x 2
+		// dx = target_x - player_x
+		// dy = target_y - player_y
+		// ldx = log(dx)  [-255,255] -> [0...63]
+		// ldy = log(dy)  [-255,255] -> [0...63]
+		
+		
 		
 		
 		// x and y coordinates must be centered at 8,127.5

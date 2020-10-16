@@ -121,33 +121,39 @@ static void half_display_canvas_int(Car *player, uint16_t address) {
 	
 	uint8_t imap = ((player->a+8)/16)&3;
 	
-	uint16_t ipx, ipy;
-	if (imap==0) {
-		ipy = player->y;
-		ipx = player->x;
+	uint8_t xx = player->x/256;
+	uint8_t yy = (player->y/256);
+	uint8_t ipx, ipy;
+	if (imap==0) { // Looking to the left
+		ipx = yy;
+		ipy = xx;
 		ML_LOAD_SEGMENT_C(ML_SEGMENT_C(track1_png_a));
 		ML_LOAD_SEGMENT_D(ML_SEGMENT_C(track1_png_a));
-	} else if (imap==1) {
-		ipy = player->x;
-		ipx = 63*256-1-player->y;
+	} else if (imap==1) { // Looking to the top
+		ipx = 255-xx;
+		ipy = yy;
 		ML_LOAD_SEGMENT_C(ML_SEGMENT_C(track1_png_b));
 		ML_LOAD_SEGMENT_D(ML_SEGMENT_C(track1_png_b));
 	} else if (imap==2) {
-		ipy = 63*256-1-player->y;
-		ipx = 63*256-1-player->x;
+		ipx = 255-yy;
+		ipy = 255-xx;
 		ML_LOAD_SEGMENT_C(ML_SEGMENT_C(track1_png_c));
 		ML_LOAD_SEGMENT_D(ML_SEGMENT_C(track1_png_c));
 	} else {
-		ipy = 63*256-1-player->x;
-		ipx = player->y;
+		ipx = xx;
+		ipy = 255-yy;
 		ML_LOAD_SEGMENT_C(ML_SEGMENT_C(track1_png_d));
 		ML_LOAD_SEGMENT_D(ML_SEGMENT_C(track1_png_d));
 	}
 	
 	tmp_car_color = player->color;
-	pimg_start = &track1_png_a[2*(64*(ipy/256)+(ipx/256))];
+	pimg_start = &track1_png_a[2*(64*((uint8_t)(ipy/4))+((uint8_t)(ipx/4)))];
 
-	uint8_t angleSelector = ((ipy/64)&3)*4*16+((ipx/64)&3)*16+((player->a+8)&15);
+	// WRONG PART THIS
+//	uint8_t angleSelector = ((player->a+8)&15); //((ipy/256)&3)*4*16+((ipx/256)&3)*16+((player->a+8)&15);
+//	uint8_t angleSelector = ((ipy/256)&3)*4*16+((ipx/256)&3)*16+((player->a+8)&15);
+//	uint8_t angleSelector = 8; //((ipy/256)&3)*4*16+((ipx/256)&3)*16;
+	uint8_t angleSelector = (ipy&3)*4*16+(ipx&3)*16+((player->a+8)&15);
 	half_display_canvas_pure(angleSelector, (address>>8) | 0x40, address&0xFF);
 }
 
