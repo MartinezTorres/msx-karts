@@ -26,6 +26,7 @@ SOURCES_C     += $(call rwildcard, src/, *.c)
 SOURCES_ASM   += $(call rwildcard, src/, *.s)
 
 .PHONY: all clean
+.SECONDARY:  
 
 all: rom 
 
@@ -34,7 +35,6 @@ all: rom
 OBJ_ASM    = $(addprefix tmp/,$(SOURCES_ASM:.s=.rel))
 OBJ_C      = $(addprefix tmp/,$(SOURCES_C:.c=.rel))
 
-.PRECIOUS: tmp/%.ihx $(OBJ_ASM) $(OBJ_C) tmp/%.lib $(SOURCES_C) $(HEADERS)
 
 tmp/%.rel: %.s $(HEADERS) 
 	@echo $(MSG)
@@ -48,34 +48,39 @@ tmp/%.rel: %.c $(HEADERS)
 	@$(CCZ80) -c -D MSX $(INCLUDES) $(CCFLAGS_MSX) $< -o $@
 	@echo " "`grep "size" tmp/$*.sym | awk 'strtonum("0x"$$4) {print $$2": "strtonum("0x"$$4)" bytes"}'` 
 
-out/%.rom: $(OBJ_C) $(OBJ_ASM)
+out/%_[ASCII8].rom: $(OBJ_C) $(OBJ_ASM) tmp/mapper/ascii8.rel
 	@echo $(MSG)
 	@mkdir -p $(@D)
-	@$(MEGALINKER) $(OBJ_C) $(OBJ_ASM) $@
+	@$(MEGALINKER) $(OBJ_C) $(OBJ_ASM) tmp/mapper/ascii8.rel $@
 
-rom: out/$(NAME).rom
+out/%_[Generic8].rom: $(OBJ_C) $(OBJ_ASM) tmp/mapper/generic8.rel
+	@echo $(MSG)
+	@mkdir -p $(@D)
+	@$(MEGALINKER) $(OBJ_C) $(OBJ_ASM) tmp/mapper/generic8.rel $@
 
-msx: out/$(NAME).rom
+rom: out/$(NAME)_[ASCII8].rom out/$(NAME)_[Generic8].rom
+
+msx: out/$(NAME)_[ASCII8].rom
 	@echo $(MSG)
 	$(OPENMSX_DEF) $< || true
 
-msx1: out/$(NAME).rom
+msx1: out/$(NAME)_[ASCII8].rom
 	@echo $(MSG)
 	$(OPENMSX1) $< || true
 
-msx1jp: out/$(NAME).rom
+msx1jp: out/$(NAME)_[ASCII8].rom
 	@echo $(MSG)
 	@$(OPENMSX1_JP) $< || true
 
-msx2: out/$(NAME).rom
+msx2: out/$(NAME)_[ASCII8].rom
 	@echo $(MSG)
 	@$(OPENMSX2) $< || true
 
-msx2p: out/$(NAME).rom
+msx2p: out/$(NAME)_[ASCII8].rom
 	@echo $(MSG)
 	@$(OPENMSX2P) $< || true
 
-msxtr: out/$(NAME).rom
+msxtr: out/$(NAME)_[ASCII8].rom
 	@echo $(MSG)
 	@$(OPENMSXTR) $< || true
 	
@@ -83,7 +88,6 @@ msxtr: out/$(NAME).rom
 ### UTILITIES SECTION
 
 INCLUDE := util
-.PRECIOUS:tmp/%
 tmp/%: %.cc
 	@echo $(MSG)
 	@mkdir -p $(@D)

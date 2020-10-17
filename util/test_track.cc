@@ -195,7 +195,7 @@ static inline void put_car_sprite(cv::Mat3b img, float si, float sj, float dist,
 				} else if (dist<55) {pi =112; pj = 80;
 				} else if (dist<58) {pi =112; pj = 96;
 				} else if (dist<60) {pi =112; pj =112;
-				} else continue;
+				} else {pi =112; pj =112;}
 
 				if (sprites( pi + i, pj + j)[0]>128) continue;
 				

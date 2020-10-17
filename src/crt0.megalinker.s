@@ -46,10 +46,10 @@ HTIMI = 0xFD9F
 .area _DATA
 ___ML_CONFIG_RAM_START =   0xC000
 
-___ML_address_a =   0x6000
-___ML_address_b =   0x6800
-___ML_address_c =   0x7000
-___ML_address_d =   0x7800
+;___ML_address_a =   0x6000
+;___ML_address_b =   0x6800
+;___ML_address_c =   0x7000
+;___ML_address_d =   0x7800
 ___ML_current_segment_a::
     .ds 1
 ___ML_current_segment_b::
@@ -102,7 +102,7 @@ init:
     ld  (___ML_address_d),a
 
 ;   Sets the stack at the top of the memory.
-    ld sp,(0xfc4a)
+    ld sp,(HIMEM)
 
 ; Detection and set of ROM page 2 (0x8000 - 0xbfff)
 ; based on a snippet taken from: http://karoshi.auic.es/index.php?topic=117.msg1465
