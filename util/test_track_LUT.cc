@@ -121,8 +121,8 @@ int main(int argc, char **argv) {
 	Entity3D player, camera;
 	
     
-	camera.pos[1] = -2;
-	camera.pos[2] = 1;
+	camera.pos[1] = -3;
+	camera.pos[2] = 1.5;
 	camera.rot = camera.rot*rotX(-14);
 
 	float FoV = 43;

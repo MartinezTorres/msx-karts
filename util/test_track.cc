@@ -233,8 +233,8 @@ int main(int argc, char **argv) {
     player.pos[1] = 1;
     
 	camera.pos[0] = 0;
-	camera.pos[1] = -2;
-	camera.pos[2] = 1;
+	camera.pos[1] = -4;
+	camera.pos[2] = 2;
 	camera.rot = camera.rot*rotX(-14);
 
     target.pos[0] = player.pos[0] + 0;
