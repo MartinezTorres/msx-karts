@@ -426,10 +426,13 @@ int main(int argc, char **argv) {
 				struct {
 					int8_t txcp[256], tysp[256];
 					int8_t txspcc[256], tycpcc[256];
+					int8_t txspsc[256], tycpsc[256];
 				} P[64];
 				int8_t l16_00[256];
 				int8_t l16_01[256];				
 				int8_t e16_1[256];
+
+					//f*(-tx*sp*sc+ty*cp*sc-b(2))/(-tx*sp*cc+ty*cp*cc-b(1))};
 
 				for (int p=0; p<64; p++) {
 					for (int ii=-128; ii<127; ii++) {
@@ -437,6 +440,8 @@ int main(int argc, char **argv) {
 						P[p].tysp[uint8_t(ii)] = std::round((ii+0.5)*sin((angle/64.)*2*3.1416));
 						P[p].txspcc[uint8_t(ii)] = std::round((ii+0.5)*sin((angle/64.)*2*3.1416)*cc);
 						P[p].tycpcc[uint8_t(ii)] = std::round((ii+0.5)*cos((angle/64.)*2*3.1416)*cc);
+						P[p].txspsc[uint8_t(ii)] = std::round((ii+0.5)*sin((angle/64.)*2*3.1416)*sc);
+						P[p].tycpsc[uint8_t(ii)] = std::round((ii+0.5)*cos((angle/64.)*2*3.1416)*sc);
 
 						{
 							{
@@ -556,6 +561,52 @@ int main(int argc, char **argv) {
 						}
 					}
 					
+					
+					std::cerr << "F: " << sc << " "  << b(1) << " "  << b(2) << std::endl;
+					{
+						int8_t v1 = P[angle].txcp[int(tx*2)];
+						int8_t v2 = P[angle].tysp[int(ty*2)];
+						int8_t v12b0 = v1 + v2 + std::round(2*b(0));
+						int8_t vt, wt;
+
+						int8_t w1 = P[angle].txspcc[int(tx*2)];
+						int8_t w2 = P[angle].tycpcc[int(ty*2)];
+						int8_t w12b0 = -w1 + w2 - std::round(2*b(1));
+
+						if (v12b0>0) { 
+							
+							vt = l16_00[v12b0];
+							if (w12b0>0) {
+								wt = l16_01[w12b0];
+
+								std::cerr << in_good(0) << " "
+										  << int(uint8_t(e16_1[uint8_t(vt-wt)]))
+										  << std::endl;
+							} else {
+								wt = l16_01[-w12b0];
+
+								std::cerr << in_good(0) << " "
+										  << -int(uint8_t(e16_1[uint8_t(vt-wt)]))
+										  << std::endl;
+							}
+								
+						} else {
+							vt = l16_00[-v12b0];
+							if (w12b0>0) {
+								wt = l16_01[w12b0];
+
+								std::cerr << in_good(0) << " "
+										  << -int(uint8_t(e16_1[uint8_t(vt-wt)]))
+										  << std::endl;
+							} else {
+								wt = l16_01[-w12b0];
+
+								std::cerr << in_good(0) << " "
+										  << int(uint8_t(e16_1[uint8_t(vt-wt)]))
+										  << std::endl;
+							}
+						}
+					}
 					
 				}
 				
