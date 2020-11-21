@@ -121,9 +121,9 @@ int main(int argc, char **argv) {
 	Entity3D player, camera;
 	
     
-	camera.pos[1] = -3;
-	camera.pos[2] = 1.5;
-	camera.rot = camera.rot*rotX(-14);
+	camera.pos[1] = -2*1.5;
+	camera.pos[2] = 1*1.5;
+	camera.rot = camera.rot*rotX(-15);
 
 	float FoV = 43;
 	float sFoV = std::sin(FoV * (M_PI / 180.0));
@@ -164,6 +164,9 @@ int main(int argc, char **argv) {
 
 				for (int itx=0; itx<32; itx++) {
 					for (int ity=32; ity<64; ity++) {
+
+//						camera.pos[1] = -2*( 1 + 0.5 * (1-(ity-32.)/192.) );
+//						camera.pos[2] = 1*( 1 + 0.5 * (1-(ity-32.)/192.) );
 
 						std::map<int, int> locationsLeft;
 						std::map<int, int> locationsRight;
@@ -240,6 +243,9 @@ int main(int argc, char **argv) {
 				
 				for (int itx=0; itx<32; itx++) {
 					for (int ity=64; ity<128; ity+=2) {
+
+//						camera.pos[1] = -2*( 1 + 0.5 * (1-(ity-32.)/192.) );
+//						camera.pos[2] = 1*( 1 + 0.5 * (1-(ity-32.)/192.) );
 
 						std::map<int, int> locationsLeft;
 						std::map<int, int> locationsRight;
@@ -679,8 +685,8 @@ int main(int argc, char **argv) {
 			}
 			if (state[SDL_SCANCODE_UP]) { 
 				
-				playervx += std::round(32*cos(playera/64. * 2 * M_PI));
-				playervy += std::round(32*sin(playera/64. * 2 * M_PI));
+				playervx += std::round(16*cos(playera/64. * 2 * M_PI));
+				playervy += std::round(16*sin(playera/64. * 2 * M_PI));
 			}
 			if (state[SDL_SCANCODE_DOWN]) { 
 
@@ -698,16 +704,16 @@ int main(int argc, char **argv) {
 			}
 			if (state[SDL_SCANCODE_Q]) exit(-1);
 
-				if (playervx>0) {
-					playervx -= (playervx+15)/16;
-				} else {
-					playervx -= (playervx-15)/16;
-				}
-				if (playervy>0) {
-					playervy -= (playervy+15)/16;
-				} else {
-					playervy -= (playervy-15)/16;
-				}
+			if (playervx>0) {
+				playervx -= (playervx+31)/32;
+			} else {
+				playervx -= (playervx-31)/32;
+			}
+			if (playervy>0) {
+				playervy -= (playervy+31)/32;
+			} else {
+				playervy -= (playervy-31)/32;
+			}
 
 			playerx += playervx;
 			playery += playervy;

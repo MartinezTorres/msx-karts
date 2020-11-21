@@ -225,6 +225,8 @@ int main(int argc, char **argv) {
  
 	Entity3D player, camera, target;
 	
+	int angle = 0;
+	
     player.pos[0] = img.rows / 2. - 0.125;
     player.pos[1] = img.cols / 2. - 0.125 + 1;
     player.pos[2] = 0;
@@ -377,15 +379,185 @@ int main(int argc, char **argv) {
 				
 		}
 
+		int kkkk = 0;
 		for (int i=0; i<img.rows; i++) {
 			for (int j=0; j<img.cols; j++) {
 				if (img(i,j)[1]!=0x67) continue;
+				if (kkkk) continue;
 				
 				cv::Vec3f tg = {i+0.5f,j+0.5f,0.f};
+				tg -= player.pos;
 				
-				cv::Vec3f l = camera.rot.t()*(player.rot.t()*(tg - player.pos) - camera.pos);
+				cv::Vec3f b = camera.rot.t()*camera.pos;
+				cv::Vec3f l = camera.rot.t()*player.rot.t()*tg;
 				
-				cv::Vec3f in = l*f/l[1];
+//				std::cerr << camera.rot.t() << std::endl;
+// [1, 0, 0;
+//  0, cc, -sc;
+//	0, sc, cc]			
+//				std::cerr << player.rot.t() << std::endl;
+//[cp, sp, 0;
+// -sp, cp, 0;
+// 0, 0, 1]
+
+// l1 = [tx*cp+ty*sp, -tx*sp+ty*cp, 0]
+// l2 = [tx*cp+ty*sp, -tx*sp*cc+ty*cp*cc, -tx*sp*sc+ty*cp*sc]
+// in = [(tx*cp+ty*sp)*f/(-tx*sp*cc+ty*cp*cc), 1, (-tx*sp*sc+ty*cp*sc)*f/(-tx*sp*cc+ty*cp*cc)]
+
+
+				l -= b;
+				
+				cv::Vec3f in_good = l*f/l[1];
+
+				float tx = tg(0), ty = tg(1);
+				float cc = camera.rot.t()(1,1), sc = camera.rot.t()(2,1);
+				float cp = player.rot.t()(0,0), sp = player.rot.t()(0,1);
+
+				cv::Vec3f in_ref = {
+					(tx*cp+ty*sp-b(0))/(-tx*sp*cc+ty*cp*cc-b(1))*f, 
+					f, 
+					(-tx*sp*sc+ty*cp*sc-b(2))/(-tx*sp*cc+ty*cp*cc-b(1))*f};
+
+				cv::Vec3f in_mid = {
+					exp((int(64*std::log(f*(tx*cp+ty*sp-b(0)))) - int(64*std::log((-tx*sp*cc+ty*cp*cc-b(1)))))/64.), 
+					f, 
+					f*(-tx*sp*sc+ty*cp*sc-b(2))/(-tx*sp*cc+ty*cp*cc-b(1))};
+
+				struct {
+					int8_t txcp[256], tysp[256];
+					int8_t txspcc[256], tycpcc[256];
+				} P[64];
+				int8_t l16_00[256];
+				int8_t l16_01[256];				
+				int8_t e16_1[256];
+
+				for (int p=0; p<64; p++) {
+					for (int ii=-128; ii<127; ii++) {
+						P[p].txcp[uint8_t(ii)] = std::round((ii+0.5)*cos((angle/64.)*2*3.1416));
+						P[p].tysp[uint8_t(ii)] = std::round((ii+0.5)*sin((angle/64.)*2*3.1416));
+						P[p].txspcc[uint8_t(ii)] = std::round((ii+0.5)*sin((angle/64.)*2*3.1416)*cc);
+						P[p].tycpcc[uint8_t(ii)] = std::round((ii+0.5)*cos((angle/64.)*2*3.1416)*cc);
+
+						{
+							{
+								double v = f*(0.5*(ii+0.5));
+								if (v<0) v = -v;
+								if (v<1e-5) v = 1e-5;
+									
+								l16_00[uint8_t(ii)] = std::max(-63., std::min(63., std::round(8*std::log(v)-64)));
+							}
+							{
+								double v = 0.5*(ii+0.5);
+								if (v<0) v = -v;
+								if (v<1e-5) v = 1e-5;
+									
+								l16_01[uint8_t(ii)] = std::max(-63., std::min(63., std::round(8*std::log(v))));
+							}
+							e16_1[uint8_t(ii)] = std::max(0., std::min(255., std::round(std::exp((abs(64+ii)+0.5)/8.))));
+						}
+					}					
+				}
+
+				
+
+				cv::Vec3f in = {
+					exp((int(64*std::log(f*(tx*cp+ty*sp-b(0)))) - int(64*std::log((-tx*sp*cc+ty*cp*cc-b(1)))))/64.), 
+					f, 
+					f*(-tx*sp*sc+ty*cp*sc-b(2))/(-tx*sp*cc+ty*cp*cc-b(1))};
+					
+				if (kkkk++ == 0) {
+					
+					std::cerr << in_good << " " << in << " " << (int(64*std::log(f*(tx*cp+ty*sp-b(0))))) << std::endl;
+
+					std::cerr << -tx*sp*cc << " " << ty*cp*cc << " " << b(0)  << std::endl;
+
+					std::cerr << cc << " " << cos((angle/64.)*2*3.1416) << " " << b(1)  << std::endl;
+					
+					std::cerr << tx << " " << ty << " " << angle << std::endl;
+
+					std::cerr << "A: " << tx*cp << " " 
+					          << int(P[angle].txcp[int(tx*2)])/2.
+					          << std::endl;
+
+					std::cerr << "B: " << ty*sp << " " 
+					          << int(P[angle].tysp[int(ty*2)])/2.
+					          << std::endl;
+
+					
+					std::cerr << "C: ";
+					{
+						int8_t v1 = P[angle].txcp[int(tx*2)];
+						int8_t v2 = P[angle].tysp[int(ty*2)];
+						int8_t v12b0 = v1 + v2 + std::round(2*b(0));
+						std::cerr << int(v1) << " " << int(v2) <<  " " << int(v12b0) << " ";
+						if (v12b0>0) {
+							std::cerr << 8*std::log(f*(tx*cp+ty*sp-b(0))) << " " << int(64+l16_00[v12b0]) << std::endl;
+						} else {
+							std::cerr << 8*std::log(-f*(tx*cp+ty*sp-b(0))) << " " << int(64+l16_00[-v12b0]) << std::endl;
+						}
+					}
+
+					std::cerr << "D: ";
+					{
+						int8_t w1 = P[angle].txspcc[int(tx*2)];
+						int8_t w2 = P[angle].tycpcc[int(ty*2)];
+						int8_t w12b0 = -w1 + w2 - std::round(2*b(1));
+						std::cerr << int(w1) << " " << int(w2) <<  " " << int(w12b0) << " ";
+						if (w12b0>0) {
+							std::cerr << 8*std::log((-tx*sp*cc+ty*cp*cc-b(1))) << " " << int(l16_01[w12b0]) << std::endl;
+						} else {
+							std::cerr << 8*std::log(-(-tx*sp*cc+ty*cp*cc-b(1))) << " " << int(l16_01[-w12b0]) << std::endl;
+						}
+					}
+
+					std::cerr << "E: ";
+					{
+						int8_t v1 = P[angle].txcp[int(tx*2)];
+						int8_t v2 = P[angle].tysp[int(ty*2)];
+						int8_t v12b0 = v1 + v2 + std::round(2*b(0));
+						int8_t vt, wt;
+
+						int8_t w1 = P[angle].txspcc[int(tx*2)];
+						int8_t w2 = P[angle].tycpcc[int(ty*2)];
+						int8_t w12b0 = -w1 + w2 - std::round(2*b(1));
+
+						if (v12b0>0) { 
+							
+							vt = l16_00[v12b0];
+							if (w12b0>0) {
+								wt = l16_01[w12b0];
+
+								std::cerr << in_good(0) << " "
+										  << int(uint8_t(e16_1[uint8_t(vt-wt)]))
+										  << std::endl;
+							} else {
+								wt = l16_01[-w12b0];
+
+								std::cerr << in_good(0) << " "
+										  << -int(uint8_t(e16_1[uint8_t(vt-wt)]))
+										  << std::endl;
+							}
+								
+						} else {
+							vt = l16_00[-v12b0];
+							if (w12b0>0) {
+								wt = l16_01[w12b0];
+
+								std::cerr << in_good(0) << " "
+										  << -int(uint8_t(e16_1[uint8_t(vt-wt)]))
+										  << std::endl;
+							} else {
+								wt = l16_01[-w12b0];
+
+								std::cerr << in_good(0) << " "
+										  << int(uint8_t(e16_1[uint8_t(vt-wt)]))
+										  << std::endl;
+							}
+						}
+					}
+					
+					
+				}
 				
 				int ii = std::floor(-in[2] + out.rows/2.);
 				int jj = std::floor(in[0] + out.cols/2.);
@@ -397,6 +569,7 @@ int main(int argc, char **argv) {
 				if (ii>=32 and jj>=0 and ii<	out.rows and jj < out.cols) {
 					put_fish_sprite(out,ii,jj,dist,cv::Vec3b(169,91,99));
 				}
+				
 			}
 		}
 
@@ -441,10 +614,12 @@ int main(int argc, char **argv) {
 		if (state[SDL_SCANCODE_LEFT]) { 
 			
 			player.rot = player.rot * rotZ(5.625);
+			angle = (angle+1)%64;
 		}
 		if (state[SDL_SCANCODE_RIGHT]) { 
 			
 			player.rot = player.rot * rotZ(-5.625);
+			angle = (angle+63)%64;
 		}
 		if (state[SDL_SCANCODE_UP]) { 
 			
@@ -455,6 +630,10 @@ int main(int argc, char **argv) {
 			
 			cv::Vec3f acc = cv::Vec3f(0,-0.02,0);
 			player.vel += player.rot * acc;
+		}
+		if (state[SDL_SCANCODE_B]) { 
+			
+			player.vel = cv::Vec3f(0,0,0);
 		}
 		if (state[SDL_SCANCODE_Q]) exit(-1);
 		if (player.vel.dot(player.vel)>0.10) player.vel *= 0.10/player.vel.dot(player.vel);
