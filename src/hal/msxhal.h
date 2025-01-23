@@ -198,7 +198,6 @@ INLINE uint8_t msxhal_get_msx_version()   { return BIOS_ROMID; }
 // TURBO FUNCTIONS
 
 #ifdef __SDCC
-
 INLINE void msxhal_request60Hz() {
     __asm
     push hl
@@ -226,5 +225,42 @@ INLINE void msxhal_enableR800() {
 #else
 INLINE void msxhal_request60Hz() {}
 INLINE void msxhal_enableR800() {}
+#endif
+
+////////////////////////////////////////////////////////////////////////
+// BIOS FUNCTIONS
+
+#ifdef __SDCC
+
+static uint16_t __at (0xFC9E) JIFFY;
+static uint8_t __at (0xF3F6) SCNCNT;
+void BIOS_CHPUT(const char a) __sdcccall(1)  __preserves_regs(b, c, d, e, h, l, iyl, iyh);
+//void BIOS_CHPUT(const char a) __sdcccall(1);
+
+#else
+
+#endif
+
+
+////////////////////////////////////////////////////////////////////////
+// IRQ FUNCTIONS
+
+typedef void (*isr_function)();
+
+#ifdef __SDCC
+
+INLINE isr_function msxhal_install_isr(isr_function f) {
+	
+	static uint8_t  __at (0xFD9F) H_TIMI;
+	static isr_function  __at (0xFDA0) H_TIMI_FUNCTION;
+	
+	isr_function old = H_TIMI_FUNCTION;
+	H_TIMI = 0xC3; // Opcode for JP
+	H_TIMI_FUNCTION = f;
+	return old;
+}
+
+#else
+
 #endif
 

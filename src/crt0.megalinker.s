@@ -137,7 +137,7 @@ init:
     ld hl, #___ML_CONFIG_INIT_ROM_START
     ld bc, #___ML_CONFIG_INIT_SIZE
 	ldir
-    
+
 .area _NONE
 .area _GSINIT
 .area _GSFINAL

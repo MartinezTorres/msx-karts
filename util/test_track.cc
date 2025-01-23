@@ -3,7 +3,8 @@
 //
 // Manuel Martinez (salutte@gmail.com)
 //
-// FLAGS: -std=gnu++14 -g `pkg-config opencv4 --cflags --libs` -Ofast -lpthread -fopenmp -lgomp -Wno-format-nonliteral -lSDL2
+// FLAGS: -std=gnu++17 -g `pkg-config opencv4 --cflags --libs` -O0 -lpthread -fopenmp -lgomp -Wno-format-nonliteral -lSDL2 -Wno-narrowing
+
 
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc.hpp>
@@ -213,6 +214,7 @@ static inline void put_car_sprite(cv::Mat3b img, float si, float sj, float dist,
 }
 
 
+
 int main(int argc, char **argv) {
 	
 	initSDL();
@@ -254,6 +256,7 @@ int main(int argc, char **argv) {
 		float sFoV = std::sin(FoV * (M_PI / 180.0));
 		float f = (out.cols/2.-0.5) * std::sqrt(1.-sFoV*sFoV)/sFoV;
 		
+		// PAINT BACKGROUND
 		for (int i=0; i<out.rows; i++) {
 			for (int j=0; j<out.cols; j++) {
 
@@ -316,53 +319,9 @@ int main(int argc, char **argv) {
 			}
 		}
 		
-		if (0) {	
-			cv::Vec3f o = player.pos + player.rot*camera.pos;
-			cv::Vec3f l = target.pos - o;
-			
-			cv::Vec3f n;
-			n[0] =  0;
-			n[1] =  1;
-			n[2] =  0;
-			n = player.rot*camera.rot*n;
 
-			cv::Vec3f nj;
-			nj[0] =  1;
-			nj[1] =  0;
-			nj[2] =  0;
-			nj = player.rot*camera.rot*nj;
-
-			cv::Vec3f ni;
-			ni[0] =  0;
-			ni[1] =  0;
-			ni[2] =  -1;
-			ni = player.rot*camera.rot*ni;
-
-			//std::cerr << player.pos << " " << (player.rot*camera.pos) << " " <<  l << " " << n << std::endl;
-
-			cv::Vec3f p0 = o + n;
-			
-			float d = (p0 - o).dot(n)/l.dot(n);
-			
-			
-			cv::Vec3f in = o + l*d;
-			
-			int ii = std::floor(ni.dot(in-p0)*f + out.rows/2.);
-			int jj = std::floor(nj.dot(in-p0)*f + out.cols/2.);
-
-			//std::cerr << ii << " " << jj << std::endl;
-				
-			if (ii>=0 and jj>=0 and ii<	out.rows and jj < out.cols) {
-				out(ii,jj) = cv::Vec3b(255,255,0);
-			}
-				
-		}
-		
-		{
-			//std::cerr << "Distance to Target: " << cv::norm(target.pos-(player.pos + player.rot*camera.pos)) << std::endl;
-		}
-
-		{	
+		// PAINT CAR
+		if (1) {	
 			
 			cv::Vec3f l = camera.rot.t()*(player.rot.t()*(target.pos - player.pos) - camera.pos);
 			
@@ -373,13 +332,459 @@ int main(int argc, char **argv) {
 
 			//std::cerr << ii << " " << jj << std::endl;
 				
-			if (ii>=0 and jj>=0 and ii<	out.rows and jj < out.cols) {
+//			float dist = cv::norm(target.pos-(player.pos + player.rot*camera.pos));
+
+			float dist = 96-ii;
+
+			if (ii>32 and jj>=0 and ii<	out.rows and jj < out.cols) {
 				out(ii,jj) = cv::Vec3b(255,255,0);
-			}
+				put_car_sprite(out,ii,jj,dist,0,cv::Vec3b(0,0,0));
+			}				
+		}
+
+		// PAINT CAR RAISED
+		if (1) {	
+			
+			cv::Vec3f l = camera.rot.t()*(player.rot.t()*(target.pos + cv::Vec3f(0,0,0.25) - player.pos) - camera.pos);
+			
+			cv::Vec3f in = l*f/l[1];
+			
+			int ii = std::floor(-in[2] + out.rows/2.);
+			int jj = std::floor(in[0] + out.cols/2.);
+
+			//std::cerr << ii << " " << jj << std::endl;
 				
+//			float dist = cv::norm(target.pos-(player.pos + player.rot*camera.pos));
+
+			float dist = 96-ii;
+
+			if (ii>32 and jj>=0 and ii<	out.rows and jj < out.cols) {
+				out(ii,jj) = cv::Vec3b(255,255,0);
+				//put_car_sprite(out,ii,jj,dist,0,cv::Vec3b(0,0,0));
+			}				
+		}
+		
+		// PAINT CAR FAST
+		if (1) {	
+			
+			cv::Vec3f l_ref = camera.rot.t()*(player.rot.t()*(target.pos - player.pos) - camera.pos);
+			
+			cv::Vec3f in_ref = l_ref*f/l_ref[1];
+						
+				
+//				std::cerr << camera.rot.t() << std::endl;
+// [1, 0, 0;
+//  0, cc, -sc;
+//	0, sc, cc]			
+//				std::cerr << player.rot.t() << std::endl;
+//[cp, sp, 0;
+// -sp, cp, 0;
+// 0, 0, 1]
+
+// l1 = [tx*cp+ty*sp, -tx*sp+ty*cp, 0]
+// l2 = [tx*cp+ty*sp, -tx*sp*cc+ty*cp*cc, -tx*sp*sc+ty*cp*sc]
+// in = [(tx*cp+ty*sp)*f/(-tx*sp*cc+ty*cp*cc), 1, (-tx*sp*sc+ty*cp*sc)*f/(-tx*sp*cc+ty*cp*cc)]
+
+			
+			cv::Vec3f in_ref2;
+			{
+				cv::Vec3f b = camera.rot.t()*camera.pos;
+				float tx = target.pos(0) - player.pos(0), ty = target.pos(1) - player.pos(1);
+				float cc = camera.rot.t()(1,1), sc = camera.rot.t()(2,1);
+				float cp = player.rot.t()(0,0), sp = player.rot.t()(0,1);
+
+				float zz = -tx*sp + ty*cp;
+				
+				in_ref2 = {
+					( tx*f*cp + ty*f*sp - f*b(0)) / ( zz*cc - b(1)), 
+					f, 
+					( zz*f*sc - f*b(2)) / (zz*cc - b(1))};
+			}
+
+			cv::Vec3f in_ref3;
+			if (1) do { // good reference
+				cv::Vec3f B = camera.rot.t()*camera.pos;
+				float tx = target.pos(0) - player.pos(0), ty = target.pos(1) - player.pos(1);
+				float CC = camera.rot.t()(1,1), SC = camera.rot.t()(2,1);
+				float cp = player.rot.t()(0,0), sp = player.rot.t()(0,1);
+
+				
+				auto rot_13s = [=](uint8_t a, int16_t x, int16_t y, bool reference = true) {
+					
+					std::pair<int16_t, int16_t> rxy;
+
+					if (reference) {
+						x = x & 0xFFFC;
+						y = y & 0xFFFC;
+						
+						
+						rxy.first  = int16_t(2*round(0.5*x*cos(a/64.*2*3.1416))) - int16_t(2*round(0.5*y*sin(a/64.*2*3.1416)));
+						rxy.second = int16_t(2*round(0.5*x*sin(a/64.*2*3.1416))) + int16_t(2*round(0.5*y*cos(a/64.*2*3.1416)));
+					}
+
+					return rxy;
+				};
+				
+
+				const double S = 255/(log2(f/2)-log2(f/96));
+				const double BIAS = S*log2(f/2)-255;
+						
+				auto zz_trans = [=](int16_t zz){ 
+					
+					double zzt = 4.*zz*SC - 256*B(2);
+					std::cerr << " zzt " << zzt << " " << 64*log(abs(zzt)) << std::endl;
+					if (zzt> 1) return std::round( S*log2(abs(zzt)));
+					if (zzt<-1) return std::round(-S*log2(abs(zzt)));
+					return 0.;	
+				}; // lookup table
+				
+				
+				auto iz_trans = [=](int16_t zz){ 
+				
+					double z = ( (4./256)*zz*CC - B(1));
+					if (z > 96) return uint8_t(0);
+					if (z < -2) return uint8_t(0);
+
+					double iz = f/z;
+					std::cerr << " iz  " << iz << " " << S*log2(iz) - BIAS << " " << z << std::endl;
+					uint8_t log_inv_z = round(S*log2(iz) - BIAS);
+					return log_inv_z;
+				}; // lookup table
+
+				auto mul_16s_8s_log = [=](int16_t a, uint8_t log_inv_z){ 
+					
+					
+					std::cerr << " 168L " << abs(a) << " " << int16_t(log_inv_z) << std::endl;
+					if (a==0) return 0.;
+					if (a>0) {
+						double bb = exp2(( a + int16_t(log_inv_z) + BIAS)/S);
+						return round(bb/256.);
+					} else {
+						double bb = exp2((-a + int16_t(log_inv_z) + BIAS)/S);
+						return -round(bb/256.);	
+					}
+				};
+
+				auto mul_16s_8s = [=](int16_t a, uint16_t log_inv_z){ 
+					
+					while (abs(a)>1024) {
+						a=a/2;
+						log_inv_z+=S;
+						std::cerr << "A: " << a << std::endl;
+					}
+					if (a==0) return 0.;
+					if (a>0) {
+						double bb =  exp2((round(S*log2( a)) + double(log_inv_z) + BIAS)/S);
+						return round(bb/64.); // To Optimize
+					} else {
+						double bb = -exp2((round(S*log2(-a)) + double(log_inv_z) + BIAS)/S);
+						return round(bb/64.); // To Optimize
+					}
+				};
+
+				
+				int16_t in0_8, in2_8;
+				{
+					int16_t tx_16 = round(tx * 16 * 4); 
+					int16_t ty_16 = round(ty * 16 * 4); 
+					
+					auto rtxy = rot_13s(-angle, tx_16, ty_16);
+					
+					uint16_t rtx_16 = rtxy.first;
+					uint16_t rty_16 = rtxy.second;
+
+					in2_8 = mul_16s_8s_log( zz_trans(rty_16), iz_trans(rty_16));
+
+					in0_8 = mul_16s_8s( rtx_16, iz_trans(rty_16) );
+
+					//if (iz_16>0) {
+						//std::cerr << in_ref3[0] << " " << in0_12 / 16. << std::endl;
+						std::cerr << "K0: " << abs(round(in_ref3[0] - in0_8)) << std::endl;
+						std::cerr << "K2: " << abs(round(in_ref3[2] - in2_8)) << " " << in_ref3[2] << std::endl;
+					//}
+
+				}
+				
+				in_ref3[0] = in0_8;
+				in_ref3[2] = in2_8;
+								
+			} while(false);			
+
+
+			do {
+				cv::Vec3f B = camera.rot.t()*camera.pos;
+				float tx = target.pos(0) - player.pos(0), ty = target.pos(1) - player.pos(1);
+				float CC = camera.rot.t()(1,1), SC = camera.rot.t()(2,1);
+				float cp = player.rot.t()(0,0), sp = player.rot.t()(0,1);
+
+				
+				auto rot_13s = [=](uint8_t a, int16_t x, int16_t y, bool reference = true) {
+					
+					std::pair<int16_t, int16_t> rxy;
+
+					if (reference) {
+						x = x & 0xFFFC;
+						y = y & 0xFFFC;
+						
+						
+						rxy.first  = int16_t(round(x*cos(a/64.*2*3.1416))) - int16_t(round(y*sin(a/64.*2*3.1416)));
+						rxy.second = int16_t(round(x*sin(a/64.*2*3.1416))) + int16_t(round(y*cos(a/64.*2*3.1416)));
+					}
+
+					return rxy;
+				};
+				
+				struct SpriteInfo {
+					
+					uint8_t x, y, ec, size;
+					
+					uint8_t log2_inv_distance;						
+				};
+
+				static int16_t OFFSET_Y;
+				static std::vector<uint8_t> LUT_Y;
+				static std::vector<uint8_t> LUT_LOG_INV_Z;
+				
+				auto calculate_sprite_info_tables = [&]() {
+					
+					//if (LUT_Y.size()) return;
+					
+					
+					LUT_Y = std::vector<uint8_t>(8*1024, 0);
+					LUT_LOG_INV_Z = std::vector<uint8_t>(256, 0);
+					
+					
+					// La distància entre la càmera i l'objectiu sempre haurà d'estar entre 2 i 96 unitats.
+					double S = 255 / ( log2( f / 2 ) - log2( f / 96) );
+					double BIAS = S * log2( f / 2) - 255;
+
+					// Oponents darrera del kart protagonista poden ser visibles:
+					// si Y > OFFSET_Y el  punt es visible.
+					OFFSET_Y = 0;
+					while ( ( (4./256)*OFFSET_Y*CC - B(1) ) > 2) OFFSET_Y-=256;
+
+					std::cerr << "OFFSET_Y " << OFFSET_Y << std::endl;
+					std::cerr << "RANGE_Y " << ( (4./256)*(OFFSET_Y+8*1024)*CC - B(1) ) << std::endl;
+
+					std::vector<double> LUT_LOG_INV_Z_DOUBLE_AGGREGATE(256, 0. );
+					std::vector<double> LUT_LOG_INV_Z_DOUBLE_WEIGHT(256, 1e-20 );
+
+					for (int i=0; i<8*1024; i++) {
+						
+						double y = i + OFFSET_Y;
+						
+						double cam_distance = ( (4./256)*y*CC - B(1) );
+
+						if (cam_distance > 96) continue;
+						if (cam_distance < 2) continue;
+
+						double zzt = 4. * y * SC - 256 * B(2);
+						double dy = round( zzt * f / cam_distance / 256 );
+						LUT_Y[i] = 32 - dy;
+
+						LUT_LOG_INV_Z_DOUBLE_AGGREGATE[32-dy] += S * log2(f / cam_distance) - BIAS;
+						
+						LUT_LOG_INV_Z_DOUBLE_WEIGHT[32-dy]++;
+					}
+
+					// Normalize we
+					for (int i=0; i<256; i++) {
+
+						int v = std::round(LUT_LOG_INV_Z_DOUBLE_AGGREGATE[i] / LUT_LOG_INV_Z_DOUBLE_WEIGHT[i]);
+						LUT_LOG_INV_Z[i] = v; 
+					}
+					
+				};
+				
+				calculate_sprite_info_tables();
+
+
+				auto get_sprite_info = [=]( int16_t x, int16_t y, int16_t z ) {
+					
+					SpriteInfo sprite_info;
+
+					double S = 255 / ( log2( f / 2 ) - log2( f / 96) );
+					double BIAS = S * log2( f / 2) - 255;
+
+					sprite_info.y = 255-32-1;
+					sprite_info.log2_inv_distance = 0; 
+					
+					
+					bool reference = true;
+					if (reference) do {
+						
+						double cam_distance = ( (4./256)*y*CC - B(1) );
+
+						if (cam_distance > 96) break;
+						if (cam_distance < 2) break;
+
+						double zzt = 4. * y * SC - 256 * B(2);
+						double dy = round( zzt * f / cam_distance / 256 );
+						sprite_info.y = 96 - 32 - (32 - dy);
+						
+						
+						double iz = f/cam_distance;						
+						sprite_info.log2_inv_distance = round(S*log2(iz) - BIAS);
+
+					} while (false);
+					
+					return sprite_info;
+				};
+					
+				
+
+
+				auto calc_y = [=](int16_t y, bool reference = true) {
+					
+					int16_t ret = 0;
+					
+					double zzt = 4. * y * SC - 256 * B(2);
+					double z = ( (4./256)*y*CC - B(1) );
+					
+					ret = round( zzt * f / z / 256 );
+
+					std::cerr << " YY " << 32-ret << std::endl;
+
+
+					return ret;
+				};
+
+
+				auto calc_x = [=](int16_t x, int16_t y, bool reference = true){ 
+
+					const double S = 255 / ( log2( f / 2 ) - log2( f / 96) );
+					const double BIAS = S * log2( f / 2) - 255;
+					
+					int16_t log_inv_z;
+					{ 
+					
+						double z = ( (4./256)*y*CC - B(1));
+						if (z > 96) return int16_t(0);
+						if (z < 2) return int16_t(0);
+
+						double iz = f/z;
+						std::cerr << " iz  " << iz << " " << S*log2(iz) - BIAS << " " << z << std::endl;
+						log_inv_z = round(S*log2(iz) - BIAS);
+					}; // lookup table					
+					
+					while (abs(x)>1024) {
+						x=x/2;
+						log_inv_z+=S;
+						std::cerr << "X: " << x << std::endl;
+					}
+					if (x==0) return int16_t(0);;
+					if (x>0) {
+						double bb =  exp2((round(S*log2( x)) + double(log_inv_z) + BIAS)/S);
+						return int16_t(round(bb/64.)); // To Optimize
+					} else {
+						double bb = -exp2((round(S*log2(-x)) + double(log_inv_z) + BIAS)/S);
+						return int16_t(round(bb/64.)); // To Optimize
+					}
+				};
+
+				
+				int16_t in0_8, in2_8;
+				{
+					int16_t tx_16 = round(tx * 16 * 4); 
+					int16_t ty_16 = round(ty * 16 * 4); 
+					
+					auto rtxy = rot_13s(-angle, tx_16, ty_16);
+					
+					uint16_t rtx_16 = rtxy.first;
+					uint16_t rty_16 = rtxy.second;
+
+					std::cerr << "TY: " << rty_16 / (16 * 4.) << " " << camera.pos[1] << std::endl;
+					
+					if ( rty_16 / (16 * 4.) < camera.pos[1]) break;
+
+					in2_8 = calc_y(rty_16);
+
+					if (in2_8 == 0) break;
+
+					in0_8 = calc_x( rtx_16, rty_16);
+
+					//if (iz_16>0) {
+						//std::cerr << in_ref3[0] << " " << in0_12 / 16. << std::endl;
+						std::cerr << "K0: " << abs(round(in_ref3[0] - in0_8)) << std::endl;
+						std::cerr << "K2: " << abs(round(in_ref3[2] - in2_8)) << " " << in_ref3[2] << std::endl;
+					//}
+
+					auto draw_sprite = [&](int x, int y, int color, float size) {
+						
+						
+						auto draw_pixel = [&](int x, int y, cv::Vec3b color) {
+							
+							y -= 64;
+							if (x >= 0 and y >= 0 and x < out.cols and y < out.rows) {
+								out(y,x) = color;
+							}
+						};
+						
+						if (y==208) return;
+						
+						if ( (color & 0x80) != 0) {
+							x = x - 32;
+						}
+						
+						for (int i=0; i<32; i++) {
+							draw_pixel(  x          , (y + i      + 1) & 0xFF, cv::Vec3b(0,255,0) );
+							draw_pixel( (x      + i), (y          + 1) & 0xFF, cv::Vec3b(0,255,0) );
+							draw_pixel( (x + 31    ), (y + i      + 1) & 0xFF, cv::Vec3b(0,255,0) );
+							draw_pixel( (x      + i), (y     + 31 + 1) & 0xFF, cv::Vec3b(0,255,0) );
+						}
+						
+						int size_h = 2; while (size_h<size) size_h+=2;
+						int size_v = 1; while (size_v<size) size_v+=1;
+						y += 31 - size_v;
+						x += 16 - size_h/2;
+						
+
+						for (int i=0; i<size_v; i++) {
+							draw_pixel( (x          ), (y + i + 1) & 0xFF, cv::Vec3b(255,255,0) );
+							draw_pixel( (x + size_h ), (y + i + 1) & 0xFF, cv::Vec3b(255,255,0) );
+						}
+
+						for (int i=0; i<size_h; i++) {
+							draw_pixel( (x + i), (y          + 1) & 0xFF, cv::Vec3b(255,255,0) );
+							draw_pixel( (x + i), (y + size_v + 1) & 0xFF, cv::Vec3b(255,255,0) );
+						}
+
+					};
+					
+					auto [ x, ec ] = std::make_tuple(std::round( in0_8 + out.cols/2. + 16), 0);
+					int y = std::round(-in2_8 + out.rows/2. + 64 - 32);
+					
+					draw_sprite(x, y, 0x80, 10);
+
+
+
+				}
+				
+				in_ref3[0] = in0_8;
+				in_ref3[2] = in2_8;
+								
+			} while(false);			
+			
+			
+			cv::Vec3f in = in_ref3;
+			
+			int ii = std::floor(-in[2] + out.rows/2.);
+			int jj = std::floor(in[0] + out.cols/2.);
+
+			if (ii>32 and jj>=1 and ii<	out.rows-1 and jj < out.cols-1) {
+				out(ii-1,jj-1) = cv::Vec3b(0,0,255);
+				out(ii-1,jj  ) = cv::Vec3b(0,0,255);
+				out(ii-1,jj+1) = cv::Vec3b(0,0,255);
+				out(ii  ,jj+1) = cv::Vec3b(0,0,255);
+				out(ii+1,jj+1) = cv::Vec3b(0,0,255);
+				out(ii+1,jj  ) = cv::Vec3b(0,0,255);
+				out(ii+1,jj-1) = cv::Vec3b(0,0,255);
+				out(ii  ,jj-1) = cv::Vec3b(0,0,255);
+			}				
 		}
 
 		int kkkk = 0;
+		if (0)
 		for (int i=0; i<img.rows; i++) {
 			for (int j=0; j<img.cols; j++) {
 				if (img(i,j)[1]!=0x67) continue;
@@ -635,26 +1040,7 @@ int main(int argc, char **argv) {
 			}
 		}
 
-		{	
-			
-			cv::Vec3f l = camera.rot.t()*(player.rot.t()*(target.pos - player.pos) - camera.pos);
-			
-			cv::Vec3f in = l*f/l[1];
-			
-			int ii = std::floor(-in[2] + out.rows/2.);
-			int jj = std::floor(in[0] + out.cols/2.);
-
-			//std::cerr << ii << " " << jj << std::endl;
-				
-//			float dist = cv::norm(target.pos-(player.pos + player.rot*camera.pos));
-
-			float dist = 96-ii;
-			std::cerr << dist << std::endl;
-
-			if (ii>32 and jj>=0 and ii<	out.rows and jj < out.cols) {
-				put_car_sprite(out,ii,jj,dist,0,cv::Vec3b(0,0,0));
-			}				
-		}
+		
 		
 		// 16 angles x 4096 possibilities x 2
 		// dx = target_x - player_x

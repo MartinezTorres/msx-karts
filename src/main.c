@@ -1,23 +1,10 @@
+#define DEBUG
+
 #include <common.h>
 
 SIN_COS
 
-
-static void CHPUT(char c) __z88dk_fastcall;
-
-static void asm_placeholder() __naked {
-    
-  	__asm
-_CHPUT:
-    ld a, l
-	jp 0x00A2      ; call CHPUT
-	__endasm;	
-}
-
-static void puts(const char *str) __z88dk_fastcall {
-	
-    while (*str) CHPUT(*str++);
-}
+static void puts(const char *str) { while (*str) BIOS_CHPUT(*str++); }
 
 
 static T_SA SA;
@@ -229,23 +216,30 @@ void play1() {
 
 	{
 		
-		player0.x = 32*256;
-		player0.y = 32*256;
+		player0.x = 5*4*256 + 1*256 + 15;
+		player0.y = (63-24)*4*256 + 1*256 + 15;
 		player0.vx = 0;
 		player0.vy = 0;
 		player0.a = 0;
 		player0.display_leaning = 0;
+		player0.color = 256*BLightBlue + BDarkBlue;
 	}
 	
-	
-	full_prepare_canvas(0x0600);
+//	full_prepare_canvas(0x0600);
+	half_prepare_canvas(0x000);
 	
 	while (true) {
 		
-		full_display_canvas(&player0, 0x600);
+		TMS99X8_debugBorder(BMagenta);
+		
+//		full_display_canvas(&player0, 0x600);
+		half_display_canvas(&player0, 0x000);
 
 		uint8_t k = keyboard_line_read(8);
 		updateCar(&player0,k);
+		
+		TMS99X8_debugBorder(BBlack);
+		wait_frame();
 	}
 }
 
@@ -444,24 +438,27 @@ void play4() {
 	}
 }
 
-int main(void) __nonbanked {
+void isr(void) __nonbanked { SCNCNT = 3; }
+
+int main_int(void) {
 
 //	msxhal_request60Hz();
     DI(); // This game has normally disabled interrupts. 
 
-	ML_EXECUTE_A(main, 
-		play4();
-		puts("Press 1-4:");
-		while (true) {
-			uint8_t k;
-			
-				k = keyboard_line_read(0);
-				if (k==0x02) { play1(); }
-				if (k==0x04) { play2(); }
-				if (k==0x08) { play3(); }
-				if (k==0x10) { play4(); }
-			wait_frame();
-		}
-	);
-    return 0;
+	puts("Press 1-4:");
+    DI(); // This game has normally disabled interrupts. 
+    
+    msxhal_install_isr(isr);
+	while (true) {
+		uint8_t k;
+		
+			k = keyboard_line_read(0);
+			if (k==0x02) { play1(); }
+			if (k==0x04) { play2(); }
+			if (k==0x08) { play3(); }
+			if (k==0x10) { play4(); }
+		wait_frame();
+	}
 }
+
+void main(void) __nonbanked { ML_EXECUTE_A(main, main_int()); }
