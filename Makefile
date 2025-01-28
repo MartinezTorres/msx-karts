@@ -13,11 +13,13 @@ AWK = gawk
 
 # C
 #SDCC = /home/manel/tools/sdcc-4.1.14
-SDCC = tools/sdcc-4.2.0
+#SDCC = tools/sdcc-4.2.0
 #SDCC = tools/sdcc-4.1.0
-#SDCC = tools/sdcc-4.5.0-rc2
+SDCC = tools/sdcc-4.5.0-rc2
 
 CCZ80 = $(SDCC)/bin/sdcc
+#MAX_ALLOCS = 100000
+MAX_ALLOCS = 500
 MAX_ALLOCS = 100000
 CCZ80FLAGS = --std-sdcc11 -mz80 --disable-warning 110 --disable-warning 126 --no-std-crt0 --out-fmt-ihx --max-allocs-per-node $(MAX_ALLOCS) --allow-unsafe-read --nostdlib --no-xinit-opt --opt-code-speed --reserve-regs-iy -I$(SDCC)/device/include
 
@@ -229,9 +231,8 @@ tmp/%: %.cc
 	@mkdir -p $(@D)
 	@$(CXX) -o $@ $< $(shell echo `grep -m1 "^// FLAGS:" $< | cut -d: -f2-`)
 
-%: util/%.cc bin/% 
-	@echo $(MSG)
-	@true
+run-%: tmp/util/% 
+	@$<
 
 clean:
 	@echo -n "Cleaning... "

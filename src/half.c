@@ -94,7 +94,7 @@ static void half_display_canvas_pure(uint8_t angleSelector, uint8_t addressh, ui
 }
 
 
-static void half_display_canvas_int(Car *player, uint16_t address) {
+static void half_display_canvas_int(Player *player, uint16_t address) {
 
 	if (player->leaning != player->display_leaning) {
 		int8_t l = player->leaning;
@@ -119,7 +119,7 @@ static void half_display_canvas_int(Car *player, uint16_t address) {
 	
 	address += MODE2_ADDRESS_CT + 32*8*1;
 	
-	uint8_t imap = ((player->a+8)/16)&3;
+	uint8_t imap = ((player->angle+8)/16)&3;
 	
 	uint8_t xx = player->x/256;
 	uint8_t yy = (player->y/256);
@@ -153,10 +153,10 @@ static void half_display_canvas_int(Car *player, uint16_t address) {
 //	uint8_t angleSelector = ((player->a+8)&15); //((ipy/256)&3)*4*16+((ipx/256)&3)*16+((player->a+8)&15);
 //	uint8_t angleSelector = ((ipy/256)&3)*4*16+((ipx/256)&3)*16+((player->a+8)&15);
 //	uint8_t angleSelector = 8; //((ipy/256)&3)*4*16+((ipx/256)&3)*16;
-	uint8_t angleSelector = (ipy&3)*4*16+(ipx&3)*16+((player->a+8)&15);
+	uint8_t angleSelector = (ipy&3)*4*16+(ipx&3)*16+((player->angle+8)&15);
 	half_display_canvas_pure(angleSelector, (address>>8) | 0x40, address&0xFF);
 }
 
-void half_display_canvas(Car *player, uint16_t address) __nonbanked {
+void half_display_canvas(Player *player, uint16_t address) __nonbanked {
 	ML_EXECUTE_A(half, half_display_canvas_int(player,address) ) ;
 }

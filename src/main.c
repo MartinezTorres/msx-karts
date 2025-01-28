@@ -33,10 +33,6 @@ static void initCanvas() {
    	TMS99X8_setFlags(TMS99X8_M2 | TMS99X8_ENABLE | TMS99X8_GINT | TMS99X8_SI | TMS99X8_MEM416K);
 }
 
-static Car player0, player1, player2, player3;
-
-enum    { J_RIGHT=0x80,J_DOWN=0x40,J_UP=0x20,J_LEFT=0x10,J_DEL=0x08,J_INS=0x04,J_HOME=0x02,J_SPACE=0x01 };
-
 uint8_t keyboard_line_read(uint8_t line) __z88dk_fastcall;
 
 inline static void keyboard_line_read_placeholder(void) {
@@ -56,161 +52,8 @@ inline static void keyboard_line_read_placeholder(void) {
 	__endasm;
 }
 
-void updateCar(Car *car, uint8_t k) {
 
-	car->leaning = 0;
-
-	if (k & J_LEFT) { 
-		
-		car->a+=1;
-		car->leaning = -1;
-
-	}
-	if (k & J_RIGHT) { 
-		
-		car->a+=63;
-		car->leaning = 1;
-	}
-	car->a = (car->a&63);
-	if (k & J_UP) { 
-		
-		car->vx += cos[car->a]>>1;
-		car->vy += sin[car->a]>>1;
-		//playervx += std::round(12*sin(playera/64. * 2 * M_PI));
-		//playervy += std::round(12*cos(playera/64. * 2 * M_PI));
-	}
-	if (k & J_DOWN) { 
-
-		if (car->vx>0) {
-			car->vx -= (car->vx+7)/8;
-		} else {
-			car->vx -= (car->vx-7)/8;
-		}
-		if (car->vy>0) {
-			car->vy -= (car->vy+7)/8;
-		} else {
-			car->vy -= (car->vy-7)/8;
-		}
-
-	}
-
-	
-	if (car->vx>0) {
-		car->vx -= (car->vx+15)/16;
-	} else {
-		car->vx -= (car->vx-15)/16;
-	}
-	if (car->vy>0) {
-		car->vy -= (car->vy+15)/16;
-	} else {
-		car->vy -= (car->vy-15)/16;
-	}
-
-
-	{
-		uint16_t px = car->x + car->vx;
-		uint16_t py = car->y + car->vy;
-		ML_LOAD_MODULE_C(track1_png_a);
-		uint8_t roadx = track1_png_a[2*(64*(px/(256*4))+(car->y/(256*4)))]&0xF;
-		uint8_t roady = track1_png_a[2*(64*(car->x/(256*4))+(py/(256*4)))]&0xF;
-		
-		if (roadx<2) {
-
-			car->vx = -car->vx;
-
-			uint8_t a = car->a & 31;
-			if (a>16) a = 32-a;
-			
-			if (a<10) { // frontal hit
-	
-				if (car->vx>0) {
-					car->vx -= (car->vx+1)/2;
-				} else {
-					car->vx -= (car->vx-1)/2;
-				}
-	
-				if ( car->a < 16) {
-					car->a += 1;
-				} else if (car->a <32) { 
-					car->a -= 1;
-				} else if (car->a <48) { 
-					car->a += 1;
-				} else {
-					car->a -= 1;
-				}
-				
-
-			} else {
-				if (car->vx>0) {
-					car->vx -= (car->vx+7)/8;
-				} else {
-					car->vx -= (car->vx-7)/8;
-				}
-	
-				if ( car->a < 16) {
-					car->a += 3;
-				} else if (car->a <32) { 
-					car->a -= 3;
-				} else if (car->a <48) { 
-					car->a += 3;
-				} else {
-					car->a -= 3;
-				}
-			}
-		}
-		if (roady<2) {
-
-			car->vy = -car->vy;
-
-			uint8_t a = car->a & 31;
-			if (a>16) a = 32-a;
-			
-			if (16-a < 10) { // frontal hit
-	
-				if (car->vy>0) {
-					car->vy -= (car->vy+1)/2;
-				} else {
-					car->vy -= (car->vy-1)/2;
-				}
-	
-				if ( car->a < 16) {
-					car->a -= 1;
-				} else if (car->a <32) { 
-					car->a += 1;
-				} else if (car->a <48) { 
-					car->a -= 1;
-				} else {
-					car->a += 1;
-				}
-
-
-			} else {
-				if (car->vy>0) {
-					car->vy -= (car->vy+7)/8;
-				} else {
-					car->vy -= (car->vy-7)/8;
-				}
-	
-				if ( car->a < 16) {
-					car->a -= 3;
-				} else if (car->a <32) { 
-					car->a += 3;
-				} else if (car->a <48) { 
-					car->a -= 3;
-				} else {
-					car->a += 3;
-				}
-			}
-		}
-	
-		
-	}
-
-	car->x += car->vx;
-	car->y += car->vy;
-}
-
-void play1() {
+void play1() {/*
 
 	initCanvas();
 
@@ -220,7 +63,7 @@ void play1() {
 		player0.y = (63-24)*4*256 + 1*256 + 15;
 		player0.vx = 0;
 		player0.vy = 0;
-		player0.a = 0;
+		player0.angle = 0;
 		player0.display_leaning = 0;
 		player0.color = 256*BLightBlue + BDarkBlue;
 	}
@@ -241,10 +84,10 @@ void play1() {
 		TMS99X8_debugBorder(BBlack);
 		wait_frame();
 	}
-}
+*/}
 
 
-void play2() {
+void play2() { /*
 
 	initCanvas();
 
@@ -254,7 +97,7 @@ void play2() {
 		player0.y = 32*256;
 		player0.vx = 0;
 		player0.vy = 0;
-		player0.a = 0;
+		player0.angle = 0;
 		player0.display_leaning = 0;
 
 		player1 = player0;
@@ -288,10 +131,10 @@ void play2() {
 			updateCar(&player1,k);
 		}		
 	}
-}
+*/}
 
 void play3() {
-
+/*
 	initCanvas();
 
 	{
@@ -353,6 +196,8 @@ void play3() {
 			updateCar(&player2,k);
 		}		
 	}
+
+*/
 }
 
 void play4() {
@@ -361,22 +206,23 @@ void play4() {
 
 	{
 		
-		player0.x = 5*4*256 + 1*256 + 15;
-		player0.y = (63-24)*4*256 + 1*256 + 15;
-		player0.vx = 0;
-		player0.vy = 0;
-		player0.a = 0;
-		player0.display_leaning = 0;
-		player0.color = 256*BLightBlue + BDarkBlue;
+		players[0].x = 5*4*256 + 1*256 + 15;
+		players[0].y = (63-24)*4*256 + 1*256 + 15;
+		players[0].vx = 0;
+		players[0].vy = 0;
+		players[0].angle = 0;
+		players[0].display_leaning = 0;
+		players[0].is_active = 1;
+		players[0].color = 256*BLightBlue + BDarkBlue;
 
-		player1 = player0;
-		player1.color = 256*BLightRed + BMediumRed;
+		players[1] = players[0];
+		players[1].color = 256*BLightRed + BMediumRed;
 
-		player2 = player0;
-		player2.color = 256*BLightYellow + BDarkYellow;
+		players[2] = players[0];
+		players[2].color = 256*BLightYellow + BDarkYellow;
 
-		player3 = player0;
-		player3.color = 256*BWhite + BGray;
+		players[3] = players[0];
+		players[3].color = 256*BWhite + BGray;
 	}
 	
 	
@@ -387,10 +233,10 @@ void play4() {
 	
 	while (true) {
 		
-		half_display_canvas(&player0, 0x000);
-		half_display_canvas(&player1, 0x090);
-		half_display_canvas(&player2, 0xD00);
-		half_display_canvas(&player3, 0xD90);
+		half_display_canvas(&players[0], 0x000);
+		half_display_canvas(&players[1], 0x090);
+		half_display_canvas(&players[2], 0xD00);
+		half_display_canvas(&players[3], 0xD90);
 
 //		wait_frame();
 
@@ -403,7 +249,7 @@ void play4() {
 		{
 		
 			uint8_t k = l8;
-			updateCar(&player0,k);
+			updateCarControls0(k);
 		}
 
 		{
@@ -413,7 +259,7 @@ void play4() {
 			if (l3 & 0x02) k+=J_RIGHT;
 			if (l5 & 0x10) k+=J_UP;
 			if (l5 & 0x01) k+=J_DOWN;
-			updateCar(&player1,k);
+			updateCarControls1(k);
 		}		
 
 		{
@@ -423,7 +269,7 @@ void play4() {
 			if (l4 & 0x02) k+=J_RIGHT;
 			if (l3 & 0x40) k+=J_UP;
 			if (l4 & 0x01) k+=J_DOWN;
-			updateCar(&player2,k);
+			updateCarControls2(k);
 		}		
 
 		{
@@ -433,8 +279,10 @@ void play4() {
 			if (l3 & 0x20) k+=J_RIGHT;
 			if (l5 & 0x02) k+=J_UP;
 			if (l3 & 0x01) k+=J_DOWN;
-			updateCar(&player3,k);
-		}		
+			updateCarControls3(k);
+		}	
+
+		updateCarPhysics();	
 	}
 }
 
@@ -450,6 +298,7 @@ int main_int(void) {
     
     msxhal_install_isr(isr);
 	while (true) {
+
 		uint8_t k;
 		
 			k = keyboard_line_read(0);

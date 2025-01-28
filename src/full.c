@@ -28,8 +28,8 @@ void full_prepare_canvas(uint16_t address) __z88dk_fastcall __nonbanked {
 	ML_EXECUTE_A(full, full_prepare_canvas_int(address) ) ;
 }
 
-static void full_display_canvas_int(Car *player, uint16_t address) {
-	
+static void full_display_canvas_int(Player *player, uint16_t address) {
+	/*
 	address += MODE2_ADDRESS_CT + 32*8*2;
 
 	uint8_t imap = ((player->a+8)/16)&3;
@@ -83,11 +83,11 @@ static void full_display_canvas_int(Car *player, uint16_t address) {
 				pd += 32;
 			}
 		}
-	}
+	}*/
 }
 
 
-void full_display_canvas(Car *player, uint16_t address) __nonbanked {
+void full_display_canvas(Player *player, uint16_t address) __nonbanked {
 	ML_EXECUTE_A(full, full_display_canvas_int(player,address) ) ;
 }
 		
