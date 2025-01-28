@@ -405,14 +405,14 @@ int main() {
 						for (int i=0; i<2048; i++) off << "0x" << boost::format("%04X") % ldxy[0][i] <<  boost::format("%s") % (i%16==15?",\n\t":", ");
 						off << "}, { \n\t";
 						for (int i=0; i<2048; i++) off << "0x" << boost::format("%04X") % (ldxy[1][i] | 0x8000) <<  boost::format("%s") % (i%16==15?",\n\t":", ");
-						off << "};\n\n";
+						off << "} };\n\n";
 					}
 
 					{
 						std::ofstream off("tmp/p_ldxy_d.c");
 						off << "#include <stdint.h>" << std::endl;
 						ofh << "extern const uint8_t p_ldxy_d[8192];" << std::endl;
-						off << "const uint8_t p_ldxy_d[8192] = { { \n\t";
+						off << "const uint8_t p_ldxy_d[8192] = { \n\t";
 						for (int i=0; i<8192; i++) off << "0x" << boost::format("%02X") % int(ldxy_d[i]) <<  boost::format("%s") % (i%32==31?",\n\t":", ");
 						off << "};\n\n";
 					}
@@ -421,7 +421,7 @@ int main() {
 						std::ofstream off("tmp/p_ldxy_a.c");
 						off << "#include <stdint.h>" << std::endl;
 						ofh << "extern const uint8_t p_ldxy_a[8192];" << std::endl;
-						off << "const uint8_t p_ldxy_a[8192] = { { \n\t";
+						off << "const uint8_t p_ldxy_a[8192] = { \n\t";
 						for (int i=0; i<8192; i++) off << "0x" << boost::format("%02X") % int(ldxy_a[i]) <<  boost::format("%s") % (i%32==31?",\n\t":", ");
 						off << "};\n\n";
 					}
@@ -430,7 +430,7 @@ int main() {
 						std::ofstream off("tmp/p_ldda_px.c");
 						off << "#include <stdint.h>" << std::endl;
 						ofh << "extern const uint8_t p_ldda_px[8192];" << std::endl;
-						off << "const uint8_t p_ldda_px[8192] = { { \n\t";
+						off << "const uint8_t p_ldda_px[8192] = { \n\t";
 						for (int i=0; i<8192; i++) off << "0x" << boost::format("%02X") % int(ldda_px[i]) <<  boost::format("%s") % (i%32==31?",\n\t":", ");
 						off << "};\n\n";
 					}
@@ -439,7 +439,7 @@ int main() {
 						std::ofstream off("tmp/p_ldda_py.c");
 						off << "#include <stdint.h>" << std::endl;
 						ofh << "extern const uint8_t p_ldda_py[8192];" << std::endl;
-						off << "const uint8_t p_ldda_py[8192] = { { \n\t";
+						off << "const uint8_t p_ldda_py[8192] = { \n\t";
 						for (int i=0; i<8192; i++) off << "0x" << boost::format("%02X") % int(ldda_py[i]) <<  boost::format("%s") % (i%32==31?",\n\t":", ");
 						off << "};\n\n";
 					}
